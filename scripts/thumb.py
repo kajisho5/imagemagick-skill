@@ -12,12 +12,14 @@ from _common import (  # noqa: E402
     check_output_not_exists,
     check_output_not_input,
     identify_dims,
-    fail,
     run,
     succeed,
     verify_output_format,
     which_magick,
     which_sips,
+    add_timeout_arg,
+    run_tool,
+    fail_error,
 )
 
 
@@ -30,6 +32,7 @@ def build_parser():
     parser.add_argument("--overwrite", action="store_true", help="allow replacing an existing output file")
     parser.add_argument("--json", action="store_true", help="print one JSON object (ok:true/false) instead of text")
     parser.add_argument("--dry-run", action="store_true", help="print the backend command that would run, write nothing")
+    add_timeout_arg(parser)
     return parser
 
 
@@ -84,9 +87,9 @@ def main(argv=None):
     as_json = wants_json(argv)
     try:
         args = build_parser().parse_args(argv)
-        payload = run_thumb(args)
+        payload = run_tool(run_thumb, args)
     except ImageSkillError as e:
-        fail(str(e), as_json)
+        fail_error(e, as_json)
         return
     succeed(payload, args.json)
 

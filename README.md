@@ -189,7 +189,7 @@ flowchart LR
 
 ## Tools
 
-19 tools, all Python 3.9 standard library, all with `--help`, `--json` and a non-zero exit with a reason on failure. Every tool that writes a file also has `--dry-run` and `--overwrite`. The **sips** column says what still works on a Mac without ImageMagick.
+19 tools, all Python 3.9 standard library, all with `--help`, `--json`, `--timeout` (seconds, default 300; on expiry ImageMagick's whole process group is killed and the tool fails with `"code": "timeout"`, exit 124) and a non-zero exit with a reason on failure. Every tool that writes a file also has `--dry-run` and `--overwrite`. The **sips** column says what still works on a Mac without ImageMagick.
 
 **Inspect and verify**
 
@@ -297,7 +297,7 @@ Protocol details:
 - **Protocol eras.** The server speaks both: the `initialize` handshake (2024-11-05 through 2025-11-25) and the per-request versioning of 2026-07-28 (`server/discover`).
 - **Results.** A call runs the script with `--json` and returns its JSON as `structuredContent` and as text. `ok: false` comes back as `isError: true`.
 - **Paths.** Use absolute file paths in arguments.
-- **Timeout.** `IMAGEMAGICK_SKILL_MCP_TIMEOUT` bounds each call: seconds, default 600, `0` for none.
+- **Timeout.** Every tool has a `timeout` argument (seconds, default 300): the tool kills ImageMagick and returns `"code": "timeout"`. `IMAGEMAGICK_SKILL_MCP_TIMEOUT` is the server's backstop per call: seconds, default 600 (raised to a call's `timeout` + 30), `0` for none.
 
 ### Capability detection
 

@@ -22,13 +22,14 @@ from _common import (  # noqa: E402
     add_output_args,
     color_arg,
     ext_of,
-    fail,
     oriented_dims,
     prepare_output,
     require_input,
     select_backend,
     succeed,
     wants_json,
+    run_tool,
+    fail_error,
 )
 
 
@@ -118,9 +119,9 @@ def main(argv=None):
     as_json = wants_json(argv)
     try:
         args = build_parser().parse_args(argv)
-        payload = run_preset(args)
+        payload = run_tool(run_preset, args)
     except ImageSkillError as e:
-        fail(str(e), as_json)
+        fail_error(e, as_json)
         return
     if not args.json and args.list:
         for name, spec in payload["presets"].items():

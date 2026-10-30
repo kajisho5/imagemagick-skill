@@ -15,11 +15,13 @@ from _common import (  # noqa: E402
     JSONArgumentParser,
     image_has_gps,
     wants_json,
-    fail,
     run,
     succeed,
     which_magick,
     which_sips,
+    add_timeout_arg,
+    run_tool,
+    fail_error,
 )
 
 
@@ -30,6 +32,7 @@ def build_parser():
     parser.add_argument("input", help="image file to read (never modified)")
     parser.add_argument("--json", action="store_true", help="print one JSON object (ok:true/false) instead of text")
     parser.add_argument("--dry-run", action="store_true", help="print the backend command that would run, write nothing")
+    add_timeout_arg(parser)
     return parser
 
 
@@ -111,9 +114,9 @@ def main(argv=None):
     as_json = wants_json(argv)
     try:
         args = build_parser().parse_args(argv)
-        payload = run_probe(args)
+        payload = run_tool(run_probe, args)
     except ImageSkillError as e:
-        fail(str(e), as_json)
+        fail_error(e, as_json)
         return
     succeed(payload, args.json)
 

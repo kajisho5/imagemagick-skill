@@ -17,6 +17,8 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (  # noqa: E402
+    DEFAULT_TIMEOUT,
+    TIMEOUT_EXIT_CODE,
     ImageSkillError,
     JSONArgumentParser,
     fail,
@@ -52,6 +54,12 @@ SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 FAILURE_SCHEMA = {
     "ok": {"type": "boolean", "description": "always false"},
     "reason": {"type": "string", "description": "human-readable cause, including argument errors; a tool may add context keys (compare --fail-below: its metrics; optimize: smallest_bytes, attempts)"},
+}
+# A failure because --timeout ran out: the failure shape plus code and timeout, exit 124.
+TIMEOUT_SCHEMA = {
+    **FAILURE_SCHEMA,
+    "code": {"type": "string", "enum": ["timeout"], "description": "always \"timeout\"; exit status 124 (every other failure has no code and exits 1). ImageMagick and every process it started have been killed, and an output file the run had begun is removed"},
+    "timeout": {"type": "number", "description": "the --timeout budget, in seconds, that ran out"},
 }
 DRY_RUN_SCHEMA = {
     "ok": {"type": "boolean", "description": "always true"},
@@ -392,7 +400,7 @@ TOOL_META = {
             "tool": {"type": "string"},
             "count": {"type": "integer"},
             "all_ok": {"type": "boolean"},
-            "results": {"type": "array", "description": "one {file, output, ok, result|reason} per input file"},
+            "results": {"type": "array", "description": "one {file, output, ok, result|reason} per input file; a file whose --timeout ran out also has code \"timeout\" and timeout"},
         },
         output_required=["tool", "count", "all_ok", "results"],
     ),
@@ -404,6 +412,7 @@ RULES = [
     "Failures - including a malformed invocation with missing or invalid flags - return ok:false with a human-readable 'reason'; a broken or empty output is never reported as success.",
     "Call probe.py before editing and check.py after, to confirm the result matches what was promised.",
     "Tools never invoke mogrify (which overwrites in place) and never build a magick command from caller-supplied strings.",
+    f"Every tool takes --timeout SECONDS (default {DEFAULT_TIMEOUT}; batch: per file): when it runs out, ImageMagick's whole process group (delegates such as gs or ffmpeg included) is killed and the tool fails with ok:false, code \"timeout\", exit status {TIMEOUT_EXIT_CODE}.",
 ]
 
 EXECUTION = {"shell": False, "network": False, "input_mutation": False, "arbitrary_executables": False}
@@ -429,7 +438,7 @@ def _json_type(action):
         return {"type": "array", "items": {"type": "string"}}
     if action.type is int:
         return {"type": "integer"}
-    if action.type is float:
+    if action.type is float or getattr(action.type, "json_type", None) == "number":
         return {"type": "number"}
     return {"type": "string"}
 
@@ -622,7 +631,7 @@ def build_contract_payload():
             "backends": "ImageMagick `magick` (every tool) or macOS `sips` (subset; see each tool's backends)",
         },
         "execution": dict(EXECUTION),
-        "result_shapes": {"failure": FAILURE_SCHEMA, "dry_run": DRY_RUN_SCHEMA},
+        "result_shapes": {"failure": FAILURE_SCHEMA, "timeout": TIMEOUT_SCHEMA, "dry_run": DRY_RUN_SCHEMA},
         "provides": provides(public_tools()),
         "tools": tools,
         "rules": RULES,

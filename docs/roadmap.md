@@ -90,7 +90,7 @@ Item IDs never change and are never reused. A dropped item stays in the table as
 | RM-067 | planned | | `overlay`: a text background box with an explicit colour and padding |
 | RM-068 | planned | | `batch --jobs N` to process files in parallel |
 | RM-069 | planned | | `batch` content-hash cache to skip unchanged inputs |
-| RM-070 | planned | | `--timeout` for every tool so a hung ImageMagick is killed and reported |
+| RM-070 | done | main | `--timeout` for every tool so a hung ImageMagick is killed and reported |
 | RM-071 | planned | | `doctor` reports ImageMagick `policy.xml` limits (memory, disk, blocked coders) |
 | RM-072 | planned | | MCP `prompts`: canned recipes (OG image, favicon set, privacy strip) naming real tool calls |
 | RM-073 | planned | | Contract fields `mutates_input: false` and an idempotency hint per tool |

@@ -30,6 +30,8 @@ from _common import (  # noqa: E402
     select_backend,
     succeed,
     wants_json,
+    run_tool,
+    fail_error,
 )
 
 LOSSY = {"jpg": "jpeg", "jpeg": "jpeg", "webp": "webp", "avif": "avif", "heic": "heic", "heif": "heic"}
@@ -179,12 +181,12 @@ def main(argv=None):
     as_json = wants_json(argv)
     try:
         args = build_parser().parse_args(argv)
-        payload = run_optimize(args)
+        payload = run_tool(run_optimize, args)
     except OptimizeFailed as e:
         fail(str(e), as_json, **e.extra)
         return
     except ImageSkillError as e:
-        fail(str(e), as_json)
+        fail_error(e, as_json)
         return
     succeed(payload, args.json)
 
