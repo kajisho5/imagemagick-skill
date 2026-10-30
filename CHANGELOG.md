@@ -6,7 +6,10 @@ under "Unreleased" in a PR move into that release's section.
 
 ## Unreleased
 
-(nothing yet)
+- CI: a `windows-imagemagick7` job (Chocolatey's ImageMagick 7, `windows-latest`) runs the
+  full test suite on Windows (RM-051). `test_tarball_ships_sources_only` now runs `npm` by
+  its resolved path (`npm.cmd` on Windows), and a new installer test runs
+  `contract`/`doctor` through `bin/install.js` on every platform.
 
 ## 0.8.0
 

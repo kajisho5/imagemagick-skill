@@ -164,6 +164,15 @@ say which sentence here no longer holds.
   HEIC is reported separately so nobody assumes it. Test:
   `test_doctor_reports_heic_write_false_when_read_only`.
 
+- **Windows CI runs ImageMagick 7's `magick.exe` only, from Chocolatey.** That is the
+  official installer, the way a Windows user gets ImageMagick; there is no ImageMagick 6
+  path to test there, because `convert.exe` on Windows is the system's disk-conversion
+  tool and is never used. The job runs the whole suite with no Windows-only skips added,
+  under Git Bash and setup-python's `python` (Windows has no reliable `python3`), and
+  fails unless `magick -version` says ImageMagick 7 and `doctor` reports kind `magick`.
+  Job: `windows-imagemagick7` in `.github/workflows/test.yml`. Test:
+  `test_windows_convert_exe_is_never_used`.
+
 ## MCP
 
 - **The MCP server has no tool table.** Everything it lists is generated from the

@@ -41,8 +41,8 @@ node bin/install.js --dir /tmp/skills         # try the installer without touchi
 ```
 
 Python 3.9+ standard library only. Tests that need ImageMagick or `sips` skip themselves
-when the binary is missing; CI runs them on Ubuntu (with and without ImageMagick) and on
-macOS (with `sips`, and with Homebrew's ImageMagick 7).
+when the binary is missing; CI runs them on Ubuntu (with and without ImageMagick), on
+macOS (with `sips`, and with Homebrew's ImageMagick 7) and on Windows (ImageMagick 7).
 
 ## Adding or changing a tool
 

@@ -57,9 +57,8 @@ class InstallerTests(unittest.TestCase):
         return os.path.join(self.home, *parts)
 
     def test_contract_and_doctor_reach_python(self):
-        # `npx imagemagick-skill contract|doctor` hands over to scripts/_contract.py, so
-        # the installer has to find the Python this machine has: on Windows that is
-        # `py`/`python`, and `python3` is at best the Microsoft Store stub.
+        # `npx imagemagick-skill contract|doctor` hands over to scripts/_contract.py
+        # through a spawned Python; this runs that hand-off on every CI platform.
         r = self.install("contract", "--json")
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("probe", {t["name"] for t in json.loads(r.stdout)["tools"]})
