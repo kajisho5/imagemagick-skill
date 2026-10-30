@@ -6,6 +6,12 @@ under "Unreleased" in a PR move into that release's section.
 
 ## Unreleased
 
+(nothing yet)
+
+## 0.8.0
+
+_Automated release: version and notes generated from pull requests merged since 0.7.2._
+
 - New: every tool takes `--timeout SECONDS` (default 300; MCP: `timeout`). It is one
   wall-clock budget for the whole run. ImageMagick now runs as the leader of its own
   process group, so when the budget runs out the whole group - delegates such as
@@ -14,6 +20,8 @@ under "Unreleased" in a PR move into that release's section.
   `{"ok": false, "code": "timeout", "timeout": N}` and exit status 124. `batch` applies
   it per file. The contract declares `timeout` on every tool and adds
   `result_shapes.timeout`. The fixed 120 s per-command ceiling is gone.
+
+- feat: --timeout on every tool; kill ImageMagick's whole process group (RM-070) (#29)
 
 ## 0.7.2
 
