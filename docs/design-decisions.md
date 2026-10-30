@@ -202,6 +202,19 @@ say which sentence here no longer holds.
   `test_foreign_image_skill_is_left_alone_with_a_warning`,
   `test_own_layout_with_extra_user_file_is_left_alone`.
 
+- **`npx imagemagick-skill doctor|contract` looks for Python 3 under several names and
+  runs the first that says it is Python 3.** A python.org install on Windows has the `py`
+  launcher and `python`, not `python3`; on macOS and Linux `python3` is the norm and
+  `python` may still be Python 2. So Windows tries `py -3`, `python`, `python3`, and
+  everything else tries `python3`, `python`; each must print `3` for
+  `sys.version_info[0]` before it is used. When none does, the installer prints
+  `{"ok": false, "code": "python_not_found", "reason": ..., "tried": [...]}` (with
+  `--json`; otherwise `error: ...` on stderr) and exits 1, instead of exiting with no
+  output. Code: `findPython3()` in `bin/install.js`. Tests:
+  `test_contract_and_doctor_work_without_python3_on_path`,
+  `test_an_interpreter_that_is_not_python_3_is_passed_over`,
+  `test_no_python_is_a_structured_error`.
+
 ## Releasing
 
 - **No release is ever cut for a major version automatically.** `major`/`breaking` labels

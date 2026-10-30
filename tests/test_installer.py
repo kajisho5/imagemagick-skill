@@ -6,6 +6,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -171,6 +172,77 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertTrue(os.path.isfile(os.path.join(self.cwd, ".claude", "skills", "imagemagick-skill", "SKILL.md")))
         self.assertFalse(os.path.exists(project_legacy))
+
+
+def path_with_only_python():
+    """A PATH directory with `python` (Python 3) and no `python3`: what a python.org
+    install on Windows exposes. On Windows that is a venv's Scripts directory, which has
+    a real python.exe and no python3.exe (Node finds .exe files on PATH, not .cmd); on
+    other systems it is a shell script named `python` that runs this interpreter."""
+    tmp = tempfile.mkdtemp()
+    if os.name == "nt":
+        venv = os.path.join(tmp, "venv")
+        subprocess.run([sys.executable, "-m", "venv", "--without-pip", venv], check=True, timeout=120)
+        bindir = os.path.join(venv, "Scripts")
+    else:
+        bindir = os.path.join(tmp, "bin")
+        os.makedirs(bindir)
+        shim = os.path.join(bindir, "python")
+        with open(shim, "w") as f:
+            f.write(f'#!/bin/sh\nexec "{sys.executable}" "$@"\n')
+        os.chmod(shim, 0o755)
+    return tmp, bindir
+
+
+@unittest.skipUnless(NODE, "requires node")
+class InstallerPythonLookupTests(unittest.TestCase):
+    """bin/install.js must find Python 3 under the names a user actually has, not only
+    `python3`. Node is run by its absolute path, so PATH holds nothing but the fixture."""
+
+    def setUp(self):
+        self.tmp, self.bindir = path_with_only_python()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+
+    def run_installer(self, path, *args):
+        home = os.path.join(self.tmp, "home")
+        os.makedirs(home, exist_ok=True)
+        env = dict(os.environ, PATH=path, HOME=home, USERPROFILE=home)
+        return subprocess.run(
+            [NODE, INSTALL_JS, *args], cwd=self.tmp, env=env, capture_output=True, text=True, timeout=120
+        )
+
+    def test_contract_and_doctor_work_without_python3_on_path(self):
+        self.assertIsNone(shutil.which("python3", path=self.bindir))
+        self.assertIsNotNone(shutil.which("python", path=self.bindir))
+        r = self.run_installer(self.bindir, "contract", "--json")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("probe", {t["name"] for t in json.loads(r.stdout)["tools"]})
+        r = self.run_installer(self.bindir, "doctor", "--json")
+        self.assertIn("backends", json.loads(r.stdout), r.stdout + r.stderr)
+
+    @unittest.skipIf(os.name == "nt", "Node runs only .exe files from PATH on Windows; a fake one needs a script")
+    def test_an_interpreter_that_is_not_python_3_is_passed_over(self):
+        # `python3` first in the lookup, but it answers like Python 2: `python` must be used.
+        fake = os.path.join(self.bindir, "python3")
+        with open(fake, "w") as f:
+            f.write('#!/bin/sh\necho 2\n')
+        os.chmod(fake, 0o755)
+        r = self.run_installer(self.bindir, "contract", "--json")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("tools", json.loads(r.stdout))
+
+    def test_no_python_is_a_structured_error(self):
+        empty = os.path.join(self.tmp, "empty")
+        os.makedirs(empty)
+        r = self.run_installer(empty, "contract", "--json")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        payload = json.loads(r.stdout)
+        self.assertEqual((payload["ok"], payload["code"]), (False, "python_not_found"))
+        self.assertTrue(payload["tried"])
+        self.assertIn("Python 3", payload["reason"])
+        r = self.run_installer(empty, "doctor")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("Python 3", r.stderr)
 
 
 

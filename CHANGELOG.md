@@ -10,6 +10,10 @@ under "Unreleased" in a PR move into that release's section.
   full test suite on Windows (RM-051). `test_tarball_ships_sources_only` now runs `npm` by
   its resolved path (`npm.cmd` on Windows), and a new installer test runs
   `contract`/`doctor` through `bin/install.js` on every platform.
+- Fix: `npx imagemagick-skill doctor|contract` no longer needs a `python3` command. It
+  tries `py -3`, `python`, `python3` on Windows and `python3`, `python` elsewhere, uses the
+  first that is Python 3, and reports `{"ok": false, "code": "python_not_found"}` (exit 1)
+  when none is; it used to exit 1 with no output.
 
 ## 0.8.0
 

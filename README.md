@@ -134,7 +134,7 @@ python3 $S/check.py og-clean.webp --input photo.heic --expect-width 1200 --expec
 python3 $S/look.py photo.heic og-clean.webp --pair -o look.png --json
 ```
 
-On Windows, a python.org install exposes `python` (or the `py` launcher) rather than `python3`.
+On Windows, a python.org install exposes `python` (or the `py` launcher) rather than `python3`. `npx imagemagick-skill doctor` and `contract` find it under either name.
 
 ## How it works
 

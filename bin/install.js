@@ -179,10 +179,12 @@ function installTo(dir) {
 }
 
 function warnIfNoBackend() {
+  const python = findPython3();
+  if (!python.ok) return; // `doctor` reports the missing Python itself
   const doctorScript = path.join(SCRIPTS_SRC, "_contract.py");
-  const result = spawnSync("python3", [doctorScript, "doctor", "--json"], { encoding: "utf8" });
+  const result = spawnSync(python.command, [...python.args, doctorScript, "doctor", "--json"], { encoding: "utf8" });
   if (result.error || result.status !== 0 || !result.stdout) {
-    return; // python3 missing or doctor itself failed; `doctor` will surface the real error
+    return; // doctor itself failed; `doctor` will surface the real error
   }
   let payload;
   try {
@@ -201,9 +203,55 @@ function warnIfNoBackend() {
   console.warn("");
 }
 
+// The names Python 3 goes by, in the order they are tried. A python.org install on
+// Windows has the `py` launcher and `python`, not `python3`; elsewhere `python3` is the
+// norm and `python` may be Python 2. Each candidate must prove it is Python 3.
+function python3Candidates(platform) {
+  if (platform === "win32") {
+    return [
+      { command: "py", args: ["-3"] },
+      { command: "python", args: [] },
+      { command: "python3", args: [] },
+    ];
+  }
+  return [
+    { command: "python3", args: [] },
+    { command: "python", args: [] },
+  ];
+}
+
+function findPython3() {
+  const candidates = python3Candidates(process.platform);
+  for (const c of candidates) {
+    const r = spawnSync(c.command, [...c.args, "-c", "import sys; print(sys.version_info[0])"], {
+      encoding: "utf8",
+      timeout: 30000,
+      windowsHide: true,
+    });
+    if (!r.error && r.status === 0 && (r.stdout || "").trim() === "3") return { ok: true, ...c };
+  }
+  const tried = candidates.map((c) => [c.command, ...c.args].join(" "));
+  return {
+    ok: false,
+    code: "python_not_found",
+    reason: `no Python 3 interpreter found on PATH (tried: ${tried.join(", ")}); install Python 3.9+ from https://www.python.org/downloads/ and make sure it is on PATH`,
+    tried,
+  };
+}
+
 function runContractOrDoctor(command, extraArgs) {
+  const python = findPython3();
+  if (!python.ok) {
+    const { ok, code, reason, tried } = python;
+    if (extraArgs.includes("--json")) {
+      console.log(JSON.stringify({ ok, code, reason, tried }, null, 2));
+    } else {
+      console.error(`error: ${reason}`);
+    }
+    process.exit(1);
+  }
   const script = path.join(SCRIPTS_SRC, "_contract.py");
-  const result = spawnSync("python3", [script, command, ...extraArgs], { stdio: "inherit" });
+  const result = spawnSync(python.command, [...python.args, script, command, ...extraArgs], { stdio: "inherit" });
   process.exit(result.status === null ? 1 : result.status);
 }
 
