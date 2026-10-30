@@ -9,6 +9,9 @@ on:
     # Mondays 03:00 UTC
     - cron: '0 3 * * 1'
 
+permissions:
+  contents: read
+
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
