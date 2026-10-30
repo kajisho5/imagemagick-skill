@@ -6,6 +6,12 @@ under "Unreleased" in a PR move into that release's section.
 
 ## Unreleased
 
+(nothing yet)
+
+## 0.8.1
+
+_Automated release: version and notes generated from pull requests merged since 0.8.0._
+
 - CI: a `windows-imagemagick7` job (Chocolatey's ImageMagick 7, `windows-latest`) runs the
   full test suite on Windows (RM-051). `test_tarball_ships_sources_only` now runs `npm` by
   its resolved path (`npm.cmd` on Windows), and a new installer test runs
@@ -14,6 +20,9 @@ under "Unreleased" in a PR move into that release's section.
   tries `py -3`, `python`, `python3` on Windows and `python3`, `python` elsewhere, uses the
   first that is Python 3, and reports `{"ok": false, "code": "python_not_found"}` (exit 1)
   when none is; it used to exit 1 with no output.
+
+- fix: installer finds Python 3 as py -3 / python, not only python3 (#31)
+- ci: Windows job with ImageMagick 7 (RM-051) (#30)
 
 ## 0.8.0
 
