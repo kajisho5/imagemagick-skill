@@ -76,6 +76,38 @@ jobs:
       - run: python3 -m unittest discover -s tests -v
       - run: python3 scripts/_contract.py doctor --json
 
+  windows-imagemagick7:
+    # RM-051. ImageMagick 7's `magick.exe` from Chocolatey (the official installer,
+    # repackaged), the way a Windows user installs it. `convert.exe` on this PATH is
+    # Windows' disk-conversion tool, so the skill must find `magick` and nothing else.
+    # Git Bash runs the same commands as the other jobs; `python` is setup-python's.
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install ImageMagick 7
+        shell: pwsh
+        run: |
+          choco install imagemagick -y --no-progress
+          $dir = Get-ChildItem 'C:\Program Files' -Directory -Filter 'ImageMagick-7*' | Select-Object -First 1
+          if (-not $dir) { throw "no C:\Program Files\ImageMagick-7* directory after choco install" }
+          $dir.FullName | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: magick is ImageMagick 7
+        run: |
+          magick -version
+          magick -version | head -n 1 | grep -q '^Version: ImageMagick 7\.'
+      - run: python -m unittest discover -s tests -v
+      - name: doctor finds ImageMagick 7's magick
+        run: |
+          python scripts/_contract.py doctor --json | tee doctor.json
+          python -c "import json; d = json.load(open('doctor.json')); assert d['ok'] and d['backends']['magick']['kind'] == 'magick', d['backends']"
+      - run: python scripts/_contract.py contract --json > /dev/null
+
   installer:
     runs-on: ubuntu-latest
     steps:

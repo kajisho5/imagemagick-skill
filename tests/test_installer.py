@@ -56,6 +56,15 @@ class InstallerTests(unittest.TestCase):
     def home_path(self, *parts):
         return os.path.join(self.home, *parts)
 
+    def test_contract_and_doctor_reach_python(self):
+        # `npx imagemagick-skill contract|doctor` hands over to scripts/_contract.py
+        # through a spawned Python; this runs that hand-off on every CI platform.
+        r = self.install("contract", "--json")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("probe", {t["name"] for t in json.loads(r.stdout)["tools"]})
+        r = self.install("doctor", "--json")
+        self.assertIn("backends", json.loads(r.stdout), r.stderr)
+
     def test_default_install_uses_the_new_name(self):
         r = self.install()
         self.assertEqual(r.returncode, 0, r.stderr)
@@ -165,12 +174,15 @@ class InstallerTests(unittest.TestCase):
 
 
 
-@unittest.skipUnless(shutil.which("npm"), "requires npm")
+NPM = shutil.which("npm")  # npm.cmd on Windows, which CreateProcess finds only by its full name
+
+
+@unittest.skipUnless(NPM, "requires npm")
 class PackageContentsTests(unittest.TestCase):
     def test_tarball_ships_sources_only(self):
         with tempfile.TemporaryDirectory() as cache:
             proc = subprocess.run(
-                ["npm", "pack", "--dry-run", "--json", "--cache", cache],
+                [NPM, "pack", "--dry-run", "--json", "--cache", cache],
                 cwd=ROOT, capture_output=True, text=True, timeout=120,
             )
         self.assertEqual(proc.returncode, 0, proc.stderr)
