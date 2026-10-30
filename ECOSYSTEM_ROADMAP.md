@@ -21,7 +21,7 @@ Not reachable from the agent. Contract fits via skill.id but has no provides[].
 
 ## Steps
 
-- [ ] **1. provides[] in the contract** — image.convert -> imagemagick-skill/convert, ...
+- [x] **1. provides[] in the contract** — image.convert -> imagemagick-skill/convert, ...
   - Done when: OS registry conformance lists it
 - [ ] **2. Windows CI with IM7 (RM-051)**
   - Done when: CI green on Windows

@@ -17,6 +17,9 @@ the scripts.
 `version` and `name` at the top level of the JSON repeat `skill.version` and `skill.id`;
 they predate `skill` and stay for compatibility.
 
+`provides` lists one capability per tool in the shape the AI Video Production OS registry
+reads: `{"id": "image.<tool>", "lifecycle": "EXPERIMENTAL", "tool_id": "imagemagick-skill/<tool>"}`.
+
 ## Where the schemas come from
 
 Each tool's `input_schema`, and the older `required_args` / `optional_args` lists, are
@@ -101,6 +104,7 @@ automation refuses to choose a major version by itself.
   "contract_version": "1.0",
   "skill": {"id": "imagemagick-skill", "version": "0.7.1", "execution_mode": "local"},
   "execution": {"shell": false, "network": false, "input_mutation": false, "arbitrary_executables": false},
+  "provides": [{"id": "image.probe", "lifecycle": "EXPERIMENTAL", "tool_id": "imagemagick-skill/probe"}],
   "tools": [{"name": "probe", "role": "analysis", "backends": ["magick", "sips"], "input_schema": {"...": "..."}}]
 }
 ```

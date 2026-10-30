@@ -62,6 +62,16 @@ class ContractShapeTests(unittest.TestCase):
         self.assertEqual(self.payload["skill"]["version"], pkg["version"])
         self.assertEqual(self.payload["execution"]["shell"], False)
 
+    def test_provides_names_every_tool_in_the_os_registry_shape(self):
+        provides = self.payload["provides"]
+        self.assertEqual([p["tool_id"] for p in provides], [f"imagemagick-skill/{t['name']}" for t in self.payload["tools"]])
+        ids = [p["id"] for p in provides]
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertIn("image.convert", ids)
+        for p in provides:
+            self.assertEqual(set(p), {"id", "lifecycle", "tool_id"})
+            self.assertIn(p["lifecycle"], ("PROPOSED", "EXPERIMENTAL", "STABLE", "DEPRECATED", "RETIRED"))
+
     def test_contract_cli_prints_the_same_payload(self):
         out = subprocess.run(
             [sys.executable, os.path.join(SCRIPTS, "_contract.py"), "contract", "--json"],
