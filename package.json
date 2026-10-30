@@ -1,6 +1,6 @@
 {
   "name": "imagemagick-skill",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "Agent Skill that gives coding agents (Claude Code, Cursor, Codex) a local ImageMagick image editor that never overwrites originals: probe, convert, resize, thumbnail, EXIF/GPS strip, trim, check. Formerly image-skill.",
   "bin": {
     "imagemagick-skill": "bin/install.js"

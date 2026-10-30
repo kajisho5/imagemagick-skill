@@ -8,6 +8,15 @@ under "Unreleased" in a PR move into that release's section.
 
 (nothing yet)
 
+## 0.7.2
+
+_Automated release: version and notes generated from pull requests merged since 0.7.1._
+
+- fix: provides[] in the contract (OS registry shape) (#28)
+- ci: pin the ImageMagick 6 job to ubuntu-24.04; add ECOSYSTEM_ROADMAP.md (#27)
+- ci: autolabel with release-drafter v7's autolabeler action; setup-node v7 (#23)
+- chore(deps): Bump actions/checkout from 4 to 7 (#8)
+
 ## 0.7.1
 
 _Automated release: version and notes generated from pull requests merged since 0.7.0._
