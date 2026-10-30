@@ -22,7 +22,8 @@ jobs:
     # apt's ImageMagick 6 has convert/identify/compare/montage but no `magick`
     # command. The skill uses it as it is (no shim), exactly as a user's Ubuntu
     # would. Python 3.9 is the oldest version the skill supports.
-    runs-on: ubuntu-latest
+    # Pinned: Ubuntu 26.04's apt package is ImageMagick 7 (with `magick`).
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
