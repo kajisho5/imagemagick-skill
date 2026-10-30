@@ -25,7 +25,7 @@ Not reachable from the agent. Contract fits via skill.id but has no provides[].
   - Done when: OS registry conformance lists it
 - [ ] **2. Windows CI with IM7 (RM-051)**
   - Done when: CI green on Windows
-- [ ] **3. --timeout on every tool (RM-070)**
+- [x] **3. --timeout on every tool (RM-070)** — [#29](https://github.com/kajisho5/imagemagick-skill/pull/29)
   - Done when: test
 - [ ] **4. (agent side) SkillSpec image_prepare** — resize/pad/strip overlay assets for video-editing overlay and thumbnail
   - Done when: plan step selects imagemagick-skill/resize
