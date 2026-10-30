@@ -594,6 +594,11 @@ def mcp_argv(spec, arguments):
     return argv + (["--"] + after if after else [])
 
 
+def provides(names):
+    """The AI Video Production OS registry's capability ids: image.<tool> -> imagemagick-skill/<tool>."""
+    return [{"id": f"image.{n}", "lifecycle": "EXPERIMENTAL", "tool_id": f"{SKILL_ID}/{n}"} for n in names]
+
+
 def build_contract_payload():
     tools = [tool_spec(name) for name in public_tools()]
     return {
@@ -618,6 +623,7 @@ def build_contract_payload():
         },
         "execution": dict(EXECUTION),
         "result_shapes": {"failure": FAILURE_SCHEMA, "dry_run": DRY_RUN_SCHEMA},
+        "provides": provides(public_tools()),
         "tools": tools,
         "rules": RULES,
     }
