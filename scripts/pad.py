@@ -23,7 +23,6 @@ from _common import (  # noqa: E402
     color_arg,
     color_is_transparent,
     ext_of,
-    fail,
     finish_output,
     gravity_offset,
     identify_dims,
@@ -36,6 +35,8 @@ from _common import (  # noqa: E402
     select_backend,
     succeed,
     wants_json,
+    run_tool,
+    fail_error,
 )
 
 
@@ -129,9 +130,9 @@ def main(argv=None):
     as_json = wants_json(argv)
     try:
         args = build_parser().parse_args(argv)
-        payload = run_pad(args)
+        payload = run_tool(run_pad, args)
     except ImageSkillError as e:
-        fail(str(e), as_json)
+        fail_error(e, as_json)
         return
     succeed(payload, args.json)
 

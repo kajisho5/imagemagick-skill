@@ -11,13 +11,34 @@ import os
 import platform
 import re
 import shutil
+import signal
 import struct
 import subprocess
 import sys
+import time
 
 
 class ImageSkillError(Exception):
     """Raised for user-facing failures. The CLI layer turns this into ok:false."""
+
+
+# --timeout (RM-070). One wall-clock budget per tool run, in seconds; see
+# docs/design-decisions.md ("A tool that runs out of --timeout ...").
+DEFAULT_TIMEOUT = 300
+TIMEOUT_EXIT_CODE = 124  # GNU timeout(1)'s status; also hyperframes-skill's
+TIMEOUT_CODE = "timeout"
+
+
+class ImageSkillTimeout(ImageSkillError):
+    """The tool's --timeout ran out. Every process it started has been killed."""
+
+    def __init__(self, seconds, stage):
+        super().__init__(
+            f"timed out after {seconds:g} s (--timeout) while running {stage}; "
+            "the ImageMagick process and everything it started were killed"
+        )
+        self.seconds = seconds
+        self.stage = stage
 
 
 def emit(payload, as_json):
@@ -32,11 +53,24 @@ def emit(payload, as_json):
         print(f"error: {payload.get('reason', 'unknown error')}", file=sys.stderr)
 
 
-def fail(reason, as_json, **extra):
+def fail(reason, as_json, exit_code=1, **extra):
     payload = {"ok": False, "reason": reason}
     payload.update(extra)
     emit(payload, as_json)
-    sys.exit(1)
+    sys.exit(exit_code)
+
+
+def timeout_fields(error):
+    """Extra failure keys for a timeout ({} for any other error)."""
+    if isinstance(error, ImageSkillTimeout):
+        return {"code": TIMEOUT_CODE, "timeout": error.seconds}
+    return {}
+
+
+def fail_error(error, as_json, **extra):
+    """ok:false for an ImageSkillError: exit 1, or exit 124 with code "timeout"."""
+    extra.update(timeout_fields(error))
+    fail(str(error), as_json, exit_code=TIMEOUT_EXIT_CODE if "code" in extra else 1, **extra)
 
 
 def succeed(payload, as_json):
@@ -139,22 +173,200 @@ def check_output_not_exists(output_path, allow_overwrite=False):
         raise ImageSkillError(f"output already exists: {output_path} (refusing to overwrite)")
 
 
-def run(cmd, dry_run=False, timeout=120):
+def timeout_seconds(value):
+    """argparse type for --timeout: seconds, greater than 0 (fractions allowed)."""
+    try:
+        n = float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"expected a number of seconds, got {value!r}")
+    if not n > 0 or n != n or n == float("inf"):
+        raise argparse.ArgumentTypeError(f"must be a number of seconds greater than 0, got {value}")
+    return n
+
+
+timeout_seconds.json_type = "number"  # read by _contract.input_schema
+
+
+def add_timeout_arg(parser, scope="the whole run"):
+    parser.add_argument(
+        "--timeout",
+        type=timeout_seconds,
+        default=DEFAULT_TIMEOUT,
+        help=f"seconds {scope} may take (default {DEFAULT_TIMEOUT}); when it runs out, ImageMagick and "
+             f"everything it started are killed and the tool fails with code \"timeout\", exit {TIMEOUT_EXIT_CODE}",
+    )
+
+
+# (deadline on time.monotonic(), budget in seconds) of the tool run in progress.
+_DEADLINE = None
+
+
+class deadline:
+    """Run the enclosed block under one wall-clock budget. A nested budget never
+    extends an enclosing one: the earlier deadline wins (preset runs resize and pad
+    inside its own budget; batch gives each file its own)."""
+
+    def __init__(self, seconds):
+        self.seconds = seconds
+
+    def __enter__(self):
+        global _DEADLINE
+        self.outer = _DEADLINE
+        if self.seconds is not None:
+            inner = (time.monotonic() + float(self.seconds), float(self.seconds))
+            if self.outer is None or inner[0] < self.outer[0]:
+                _DEADLINE = inner
+        return self
+
+    def __exit__(self, *exc):
+        global _DEADLINE
+        _DEADLINE = self.outer
+        return False
+
+
+def run_tool(run_fn, args):
+    """Call a tool's run_<name>(args) under its --timeout. When the budget runs out,
+    an output file this run created (and so is incomplete) is removed."""
+    output = getattr(args, "output", None)
+    fresh = isinstance(output, str) and not os.path.exists(output)
+    try:
+        with deadline(getattr(args, "timeout", None)):
+            return run_fn(args)
+    except ImageSkillTimeout:
+        if fresh and os.path.isfile(output):
+            try:
+                os.remove(output)
+            except OSError:
+                pass
+        raise
+
+
+def _group_kwargs():
+    """Start the child as the leader of a new process group, so a timeout can kill
+    every process it started (ImageMagick delegates: gs, ffmpeg, inkscape, ...)."""
+    if os.name == "nt":
+        return {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+    return {"start_new_session": True}
+
+
+def _taskkill():
+    system_root = os.environ.get("SYSTEMROOT")
+    if system_root:
+        candidate = os.path.join(system_root, "System32", "taskkill.exe")
+        if os.path.isfile(candidate):
+            return candidate
+    return "taskkill"
+
+
+def kill_process_tree(proc):
+    """Kill a child started with _group_kwargs() and everything it started. Never
+    raises: the child may already be gone."""
+    if os.name == "nt":
+        try:
+            subprocess.run([_taskkill(), "/T", "/F", "/PID", str(proc.pid)], capture_output=True, timeout=10)
+        except Exception:
+            pass
+    else:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except Exception:
+            pass
+    try:
+        proc.kill()  # the direct child, in case the group kill did not reach it
+    except Exception:
+        pass
+
+
+_ACTIVE = set()
+
+
+def _on_terminate(signum, _frame):
+    """SIGTERM/SIGHUP to the tool (an MCP client giving up, a CI cancel): take the
+    running ImageMagick process group down with it instead of orphaning it."""
+    for proc in list(_ACTIVE):
+        kill_process_tree(proc)
+    sys.exit(128 + signum)
+
+
+def _install_terminate_handler():
+    if os.name == "nt" or _install_terminate_handler.done:
+        return
+    _install_terminate_handler.done = True
+    import threading
+
+    if threading.current_thread() is not threading.main_thread():
+        return
+    for sig in (signal.SIGTERM, signal.SIGHUP):
+        try:
+            if signal.getsignal(sig) in (signal.SIG_DFL, None):
+                signal.signal(sig, _on_terminate)
+        except (ValueError, OSError):
+            pass
+
+
+_install_terminate_handler.done = False
+
+
+def run_process(cmd, timeout=None, text=True):
+    """Run an argv list (never a shell) in its own process group and return
+    (returncode, stdout, stderr). The child gets at most what is left of the
+    current --timeout budget (DEFAULT_TIMEOUT outside a tool run); `timeout` is an
+    optional tighter ceiling for this one command. When the budget runs out the
+    whole process group is killed and reaped, then ImageSkillTimeout is raised; a
+    command's own ceiling running out is an ordinary ImageSkillError. The argv runs
+    as given (run() maps IM7-style argv for ImageMagick 6 first)."""
+    stage = os.path.basename(str(cmd[0])) if cmd else "a command"
+    budget = _DEADLINE
+    if budget is None:
+        budget = (time.monotonic() + DEFAULT_TIMEOUT, float(DEFAULT_TIMEOUT))
+    remaining = budget[0] - time.monotonic()
+    if remaining <= 0:
+        raise ImageSkillTimeout(budget[1], stage)
+    budget_binds = timeout is None or remaining <= timeout
+    limit = remaining if budget_binds else timeout
+    _install_terminate_handler()
+    try:
+        proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                **_group_kwargs())
+    except FileNotFoundError:
+        raise ImageSkillError(f"command not found: {cmd[0]}")
+    _ACTIVE.add(proc)
+    try:
+        try:
+            stdout, stderr = proc.communicate(timeout=limit)
+        except subprocess.TimeoutExpired:
+            kill_process_tree(proc)
+            try:
+                proc.communicate(timeout=10)
+            except subprocess.TimeoutExpired:  # a pipe still held open by something the kill missed
+                proc.kill()
+                proc.wait()
+            if budget_binds:
+                raise ImageSkillTimeout(budget[1], stage)
+            raise ImageSkillError(f"command timed out: {' '.join(cmd)}")
+        except BaseException:
+            kill_process_tree(proc)
+            proc.wait()
+            raise
+    finally:
+        _ACTIVE.discard(proc)
+    if text:
+        stdout = stdout.decode("utf-8", errors="replace")
+        stderr = stderr.decode("utf-8", errors="replace")
+    return proc.returncode, stdout, stderr
+
+
+def run(cmd, dry_run=False, timeout=None):
     """Run a subprocess command given as an argv list. Never uses shell=True."""
     cmd = magick_argv(cmd)
     if dry_run:
         return {"dry_run": True, "command": cmd}
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-    except FileNotFoundError:
-        raise ImageSkillError(f"command not found: {cmd[0]}")
-    except subprocess.TimeoutExpired:
-        raise ImageSkillError(f"command timed out: {' '.join(cmd)}")
-    if result.returncode != 0:
+    returncode, stdout, stderr = run_process(cmd, timeout=timeout)
+    if returncode != 0:
         raise ImageSkillError(
-            f"command failed ({cmd[0]}): {result.stderr.strip() or result.stdout.strip()}"
+            f"command failed ({cmd[0]}): {stderr.strip() or stdout.strip()}"
         )
-    return {"dry_run": False, "command": cmd, "stdout": result.stdout, "stderr": result.stderr}
+    return {"dry_run": False, "command": cmd, "stdout": stdout, "stderr": stderr}
 
 
 EXT_TO_MAGICK_FORMAT = {
@@ -263,6 +475,7 @@ def add_output_args(parser, output_required=True, output_help=None):
     parser.add_argument("--overwrite", action="store_true", help="allow replacing an existing output file")
     parser.add_argument("--json", action="store_true", help="print one JSON object (ok:true/false) instead of text")
     parser.add_argument("--dry-run", action="store_true", help="print the backend command that would run, write nothing")
+    add_timeout_arg(parser)
 
 
 def select_backend(sips_ok):
@@ -475,8 +688,8 @@ def exif_blob_has_gps(blob):
 
 def image_has_gps(magick, path):
     """True/False/None for GPS in an image's EXIF, via the raw profile (`exif:-`)."""
-    proc = subprocess.run([magick, f"{path}[0]", "exif:-"], capture_output=True, timeout=120)
-    if proc.returncode != 0 or not proc.stdout:
+    returncode, stdout, _ = run_process([magick, f"{path}[0]", "exif:-"], text=False)
+    if returncode != 0 or not stdout:
         # "no APP1 data is available": the image has no EXIF block at all
         return False
-    return exif_blob_has_gps(proc.stdout)
+    return exif_blob_has_gps(stdout)

@@ -9,11 +9,13 @@ from _common import (  # noqa: E402
     ImageSkillError,
     JSONArgumentParser,
     wants_json,
-    fail,
     identify_dims,
     run,
     succeed,
     which_magick,
+    add_timeout_arg,
+    run_tool,
+    fail_error,
 )
 
 
@@ -27,6 +29,7 @@ def build_parser():
     parser.add_argument("--expect-max-height", type=int, help="fail if height exceeds this (for fit-mode results)")
     parser.add_argument("--expect-format", help="expected format, e.g. WEBP, JPEG, PNG")
     parser.add_argument("--json", action="store_true", help="print one JSON object (ok:true/false) instead of text")
+    add_timeout_arg(parser)
     return parser
 
 
@@ -72,9 +75,9 @@ def main(argv=None):
     as_json = wants_json(argv)
     try:
         args = build_parser().parse_args(argv)
-        payload = run_check(args)
+        payload = run_tool(run_check, args)
     except ImageSkillError as e:
-        fail(str(e), as_json)
+        fail_error(e, as_json)
         return
     succeed(payload, args.json)
 

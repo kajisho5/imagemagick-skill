@@ -115,6 +115,30 @@ say which sentence here no longer holds.
 
 ## Arguments and results
 
+- **A tool that runs out of `--timeout` kills ImageMagick's whole process group and
+  fails with `"code": "timeout"`, exit 124** (RM-070). ImageMagick hands PDFs, EPS, SVG
+  and video frames to delegates (Ghostscript, ffmpeg, Inkscape) that it starts as
+  children; killing only `magick` would leave them running, so every command starts as
+  the leader of a new process group (POSIX `start_new_session`; Windows
+  `CREATE_NEW_PROCESS_GROUP`) and a timeout kills the group (`os.killpg(SIGKILL)`;
+  Windows `taskkill /T /F`, which walks the tree), then reaps it before answering.
+  SIGKILL without a SIGTERM first: the only thing a killed command could flush is the
+  output, and a half-written output is deleted anyway. The budget is one wall-clock
+  allowance per run, not per command (`optimize` encodes many times; the caller cares
+  how long the tool takes); a nested budget never extends an enclosing one. The default
+  is 300 s: generous for any still image (the old fixed ceiling was 120 s per command,
+  now replaced), short enough that a hung delegate does not stall an agent session
+  indefinitely. Exit 124 is GNU `timeout`'s status and hyperframes-skill's; `code` is
+  the first failure code in this repository's `ok:false` shape, so every other failure
+  keeps exit 1 and no `code`. `batch` gives each file its own budget, because one hung
+  file should cost that file, not the folder (same reasoning as "batch keeps going").
+  A SIGTERM to the tool itself (an MCP client giving up) kills the running group too,
+  and the MCP server sends SIGTERM before SIGKILL for that reason. Same pattern as
+  qc-skill ADR-019 and hyperframes-skill `lib/proc.mjs`. Tests:
+  `test_timed_out_run_fails_with_the_timeout_code_and_leaves_no_child`,
+  `test_batch_records_the_timeout_per_file_and_kills_each_run`,
+  `test_nested_budget_never_extends_the_outer_one`.
+
 - **A malformed invocation still answers with `ok: false` JSON under `--json`**, exit 1,
   instead of argparse's usage text and exit 2. Agents parse one shape for every failure.
   Code: `_common.JSONArgumentParser.error()`. Tests:

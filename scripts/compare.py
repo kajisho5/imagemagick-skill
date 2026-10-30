@@ -15,7 +15,6 @@ flattened onto white (alpha is not compared), and must have the same size.
 """
 import math
 import os
-import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -29,9 +28,12 @@ from _common import (  # noqa: E402
     prepare_output,
     require_input,
     run,
+    run_process,
     select_backend,
     succeed,
     wants_json,
+    run_tool,
+    fail_error,
 )
 
 FLATTEN = ["-auto-orient", "-background", "white", "-alpha", "remove", "-alpha", "off"]
@@ -69,10 +71,9 @@ def _gray_bytes(magick, path, width, height, factor):
     if factor > 1:
         cmd += ["-filter", "box", "-resize", f"{max(1, width // factor)}x{max(1, height // factor)}!"]
     cmd += ["-depth", "8", "rgb:-"]
-    proc = subprocess.run(cmd, capture_output=True, timeout=120)
-    if proc.returncode != 0:
-        raise ImageSkillError(f"could not read pixels of {path}: {proc.stderr.decode(errors='replace').strip()}")
-    rgb = proc.stdout
+    returncode, rgb, stderr = run_process(cmd, text=False)
+    if returncode != 0:
+        raise ImageSkillError(f"could not read pixels of {path}: {stderr.decode(errors='replace').strip()}")
     return [(299 * rgb[i] + 587 * rgb[i + 1] + 114 * rgb[i + 2]) / 1000.0 for i in range(0, len(rgb), 3)]
 
 
@@ -206,12 +207,12 @@ def main(argv=None):
     as_json = wants_json(argv)
     try:
         args = build_parser().parse_args(argv)
-        payload = run_compare(args)
+        payload = run_tool(run_compare, args)
     except CompareFailed as e:
         fail(str(e), as_json, **e.payload)
         return
     except ImageSkillError as e:
-        fail(str(e), as_json)
+        fail_error(e, as_json)
         return
     succeed(payload, args.json)
 

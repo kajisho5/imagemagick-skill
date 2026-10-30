@@ -63,6 +63,10 @@ speaks JSON and never overwrites its input.
    Missing or invalid flags are reported the same way as any other failure -
    never assume you have to pre-validate flags yourself before calling a
    script.
+8. **Every script takes `--timeout SECONDS` (default 300).** When it runs out,
+   ImageMagick and everything it started are killed and the result is
+   `ok:false` with `"code": "timeout"` (exit 124). For a huge image or a slow
+   delegate, retry with a larger `--timeout` the user agrees to - don't loop.
 
 ## Typical flow
 

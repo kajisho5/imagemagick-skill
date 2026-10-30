@@ -20,7 +20,6 @@ from _common import (  # noqa: E402
     check_output_not_exists,
     check_output_not_input,
     color_arg,
-    fail,
     magick_info,
     run,
     select_backend,
@@ -28,6 +27,9 @@ from _common import (  # noqa: E402
     verify_output_format,
     wants_json,
     require_input,
+    add_timeout_arg,
+    run_tool,
+    fail_error,
 )
 
 
@@ -51,6 +53,7 @@ def build_parser():
     parser.add_argument("--overwrite", action="store_true", help="allow replacing existing icon files")
     parser.add_argument("--json", action="store_true", help="print one JSON object (ok:true/false) instead of text")
     parser.add_argument("--dry-run", action="store_true", help="print the backend commands that would run, write nothing")
+    add_timeout_arg(parser)
     return parser
 
 
@@ -137,9 +140,9 @@ def main(argv=None):
     as_json = wants_json(argv)
     try:
         args = build_parser().parse_args(argv)
-        payload = run_icons(args)
+        payload = run_tool(run_icons, args)
     except ImageSkillError as e:
-        fail(str(e), as_json)
+        fail_error(e, as_json)
         return
     succeed(payload, args.json)
 

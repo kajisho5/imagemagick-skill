@@ -14,7 +14,6 @@ from _common import (  # noqa: E402
     ImageSkillError,
     JSONArgumentParser,
     add_output_args,
-    fail,
     finish_output,
     identify_dims,
     magick_info,
@@ -26,6 +25,8 @@ from _common import (  # noqa: E402
     succeed,
     wants_json,
     find_fonts,
+    run_tool,
+    fail_error,
 )
 from _grid import grid_command, grid_shape, sheet_size  # noqa: E402
 
@@ -113,9 +114,9 @@ def main(argv=None):
     as_json = wants_json(argv)
     try:
         args = build_parser().parse_args(argv)
-        payload = run_look(args)
+        payload = run_tool(run_look, args)
     except ImageSkillError as e:
-        fail(str(e), as_json)
+        fail_error(e, as_json)
         return
     succeed(payload, args.json)
 

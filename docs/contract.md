@@ -45,7 +45,18 @@ Every tool prints exactly one JSON object with `--json`.
 | --- | --- |
 | success | `{"ok": true, ...}` with the keys in the tool's `output_schema` |
 | failure | `{"ok": false, "reason": "..."}`, exit status 1 - including a malformed invocation (missing or invalid flags), which never falls back to argparse's usage text |
+| timeout | `{"ok": false, "reason": "...", "code": "timeout", "timeout": 300}`, exit status 124 - `--timeout` ran out (see below) |
 | `--dry-run` | `{"ok": true, "dry_run": true, "would_run": [argv...]}` - nothing is written |
+
+`result_shapes` in the JSON holds all three (`failure`, `timeout`, `dry_run`). Every tool
+takes `--timeout SECONDS` (a number greater than 0, default 300): one wall-clock budget
+for the whole run, however many ImageMagick commands it takes. ImageMagick runs as the
+leader of its own process group (POSIX: a new session; Windows:
+`CREATE_NEW_PROCESS_GROUP`), so when the budget runs out the whole group - delegates such
+as Ghostscript or ffmpeg included - is killed (`killpg(SIGKILL)`; Windows:
+`taskkill /T /F`) and reaped before the tool answers, and an output file the run had
+started is removed. `batch` gives each file its own `--timeout` and records a timed-out
+file as a failed entry with `code` and `timeout`; the batch itself goes on.
 
 A broken, empty or mislabeled output is a failure, never `ok: true`: tools that write a
 file re-read it, and a file whose real format differs from its extension (ImageMagick can
@@ -125,6 +136,7 @@ Report width, height, format, colorspace, alpha, and GPS presence as JSON.
 | `input` (positional) | string | yes |  | image file to read (never modified) |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 
 Output of `--json` on success (`ok: true`):
 
@@ -156,6 +168,7 @@ Convert an image to a different format (e.g. HEIC to JPEG/PNG/WebP). Input is pr
 | `--overwrite` | boolean | no |  | allow replacing an existing output file |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 
 Output of `--json` on success (`ok: true`):
 
@@ -184,6 +197,7 @@ Resize an image: fit (default, no distortion), fill (crop to cover), or exact (f
 | `--overwrite` | boolean | no |  | allow replacing an existing output file |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 
 Output of `--json` on success (`ok: true`):
 
@@ -213,6 +227,7 @@ Create a thumbnail sized by its longest edge, preserving aspect ratio.
 | `--overwrite` | boolean | no |  | allow replacing an existing output file |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 
 Output of `--json` on success (`ok: true`):
 
@@ -239,6 +254,7 @@ Remove GPS/EXIF metadata. Applies orientation before stripping. Requires ImageMa
 | `--overwrite` | boolean | no |  | allow replacing an existing output file |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 
 Output of `--json` on success (`ok: true`):
 
@@ -266,6 +282,7 @@ Trim a solid-color border. Fails instead of over-trimming. Requires ImageMagick.
 | `--overwrite` | boolean | no |  | allow replacing an existing output file |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 
 Output of `--json` on success (`ok: true`):
 
@@ -296,6 +313,7 @@ Verify an output file opens, matches promised dimensions/format, and didn't over
 | `--expect-max-height` | integer | no |  | fail if height exceeds this (for fit-mode results) |
 | `--expect-format` | string | no |  | expected format, e.g. WEBP, JPEG, PNG |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 
 Output of `--json` on success (`ok: true`):
 
@@ -321,6 +339,7 @@ Make a labelled preview sheet (or a before/after pair) of images so the agent ca
 | `--overwrite` | boolean | no |  | allow replacing an existing output file |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 | `--tile` | string | no | `320` | longest side of each preview tile in pixels (default 320) |
 | `--cols` | string | no |  | tiles per row (default: up to 4) |
 | `--pair` | boolean | no |  | exactly two inputs shown side by side as before / after |
@@ -357,6 +376,7 @@ Measure the difference between two same-size images (SSIM, PSNR, changed pixels)
 | `--overwrite` | boolean | no |  | allow replacing an existing output file |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 | `--fuzz` | number | no |  | percent of full scale a channel may differ by and still count as unchanged in diff_ratio (default 0: exact) |
 | `--fail-below` | number | no |  | report ok:false (exit 1) when SSIM is below this value (0-1), metrics still included |
 
@@ -395,6 +415,7 @@ Re-encode an image to fit a file-size budget (--max-kb) without changing its dim
 | `--overwrite` | boolean | no |  | allow replacing an existing output file |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 | `--max-kb` | number | yes |  | size budget in kilobytes (1 KB = 1000 bytes) |
 | `--min-quality` | integer | no | `40` | lowest quality the search may use, 1-100 (default 40) |
 | `--max-quality` | integer | no | `95` | highest quality the search may use, 1-100 (default 95) |
@@ -433,6 +454,7 @@ Crop to an exact pixel rectangle, or to the largest region of an aspect ratio pl
 | `--overwrite` | boolean | no |  | allow replacing an existing output file |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 | `--x` | string | no |  | rectangle: left edge in pixels (with --y --width --height) |
 | `--y` | string | no |  | rectangle: top edge in pixels |
 | `--width` | string | no |  | rectangle: width in pixels |
@@ -467,6 +489,7 @@ Pad to an aspect ratio or exact canvas with a given colour (or transparency), ne
 | `--overwrite` | boolean | no |  | allow replacing an existing output file |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 | `--aspect` | string | no |  | pad to the smallest W:H canvas that holds the image, e.g. 1:1 or 16:9 |
 | `--width` | string | no |  | exact canvas width in pixels (with --height) |
 | `--height` | string | no |  | exact canvas height in pixels (with --width) |
@@ -501,6 +524,7 @@ Rotate clockwise, mirror, or just bake EXIF orientation into the pixels.
 | `--overwrite` | boolean | no |  | allow replacing an existing output file |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 | `--degrees` | number | no |  | clockwise rotation in degrees (default 0) |
 | `--flip-horizontal` | boolean | no |  | mirror left-right (after rotating) |
 | `--flip-vertical` | boolean | no |  | mirror top-bottom (after rotating) |
@@ -535,6 +559,7 @@ Levels, brightness, contrast, saturation, blur and sharpen with explicit values;
 | `--overwrite` | boolean | no |  | allow replacing an existing output file |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 | `--levels` | string | no |  | BLACK,WHITE[,GAMMA]: input black and white points in percent (0-100) and optional gamma, e.g. 5,95 or 0,100,1.2 |
 | `--brightness` | number | no |  | -100 to 100 (0 = unchanged) |
 | `--contrast` | number | no |  | -100 to 100 (0 = unchanged) |
@@ -567,6 +592,7 @@ Overlay a logo image or a line of text at a position with margin and opacity; te
 | `--overwrite` | boolean | no |  | allow replacing an existing output file |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 | `--image` | string | no |  | overlay image, e.g. a logo PNG with transparency |
 | `--text` | string | no |  | overlay text (rendered literally, one line) |
 | `--position` | string: `northwest` \| `north` \| `northeast` \| `west` \| `center` \| `east` \| `southwest` \| `south` \| `southeast` | yes |  | where the overlay sits |
@@ -607,6 +633,7 @@ Compose several images into a row or grid with an explicit background, optional 
 | `--overwrite` | boolean | no |  | allow replacing an existing output file |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 | `--cols` | string | no |  | images per row (default: all in one row) |
 | `--cell-width` | string | no |  | cell width in pixels (with --cell-height; default: widest input) |
 | `--cell-height` | string | no |  | cell height in pixels (with --cell-width; default: tallest input) |
@@ -650,6 +677,7 @@ Make favicon.ico (several sizes), PNG icons and apple-touch-icon.png from one sq
 | `--overwrite` | boolean | no |  | allow replacing existing icon files |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend commands that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 
 Output of `--json` on success (`ok: true`):
 
@@ -678,6 +706,7 @@ Resize to a named published size (og, instagram-*, youtube-thumbnail, ...) with 
 | `--overwrite` | boolean | no |  | allow replacing an existing output file |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 | `--preset` | string: `apple-touch-icon` \| `instagram-landscape` \| `instagram-portrait` \| `instagram-reel-cover` \| `instagram-square` \| `instagram-story` \| `linkedin-share` \| `og` \| `pinterest-pin` \| `pwa-icon-192` \| `pwa-icon-512` \| `youtube-shorts-thumbnail` \| `youtube-thumbnail` | no |  | named size from presets.json |
 | `--mode` | string: `fill` \| `fit` \| `pad` | no |  | fill: cover and centre-crop to the exact size; fit: inside the size, no crop (may be smaller); pad: fit inside, then pad to the exact size with --color |
 | `--color` | string | no |  | pad mode only: fill colour (none = transparent) |
@@ -716,6 +745,7 @@ Run a tool over every image in a folder: per-file tools write one output each, l
 | `--against` | string | no |  | compare only: folder holding the second image of each pair (matched by file name) |
 | `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
 | `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds each file's run (forwarded to the tool; a --timeout after -- wins) may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
 | `tool_args` (after `--`) | array of string | no |  | arguments forwarded to the per-file tool, e.g. ["--width", "1200", "--height", "1200"] |
 
 Output of `--json` on success (`ok: true`):
@@ -726,6 +756,6 @@ Output of `--json` on success (`ok: true`):
 | `tool` | string | yes |  |
 | `count` | integer | yes |  |
 | `all_ok` | boolean | yes |  |
-| `results` | array | yes | one {file, output, ok, result\|reason} per input file |
+| `results` | array | yes | one {file, output, ok, result\|reason} per input file; a file whose --timeout ran out also has code "timeout" and timeout |
 
 <!-- END GENERATED: tools -->

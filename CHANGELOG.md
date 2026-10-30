@@ -6,7 +6,14 @@ under "Unreleased" in a PR move into that release's section.
 
 ## Unreleased
 
-(nothing yet)
+- New: every tool takes `--timeout SECONDS` (default 300; MCP: `timeout`). It is one
+  wall-clock budget for the whole run. ImageMagick now runs as the leader of its own
+  process group, so when the budget runs out the whole group - delegates such as
+  Ghostscript or ffmpeg included - is killed (POSIX `killpg`, Windows `taskkill /T`),
+  an output file the run had started is removed, and the tool fails with
+  `{"ok": false, "code": "timeout", "timeout": N}` and exit status 124. `batch` applies
+  it per file. The contract declares `timeout` on every tool and adds
+  `result_shapes.timeout`. The fixed 120 s per-command ceiling is gone.
 
 ## 0.7.2
 

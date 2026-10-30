@@ -16,7 +16,16 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _common import ImageSkillError, JSONArgumentParser, fail, succeed, wants_json  # noqa: E402
+from _common import (  # noqa: E402
+    ImageSkillError,
+    JSONArgumentParser,
+    succeed,
+    wants_json,
+    add_timeout_arg,
+    fail_error,
+    run_tool,
+    timeout_fields,
+)
 
 PER_FILE_TOOLS = ("convert", "resize", "thumb", "strip", "trim", "crop", "pad", "rotate", "optimize",
                   "adjust", "overlay", "preset")
@@ -43,6 +52,7 @@ def build_parser():
                         help="compare only: folder holding the second image of each pair (matched by file name)")
     parser.add_argument("--json", action="store_true", help="print one JSON object (ok:true/false) instead of text")
     parser.add_argument("--dry-run", action="store_true", help="print the backend command that would run, write nothing")
+    add_timeout_arg(parser, scope="each file's run (forwarded to the tool; a --timeout after -- wins)")
     return parser
 
 
@@ -83,7 +93,7 @@ def run_batch(args):
     module = importlib.import_module(TOOL_MODULES[args.tool])
     parser = module.build_parser()
     run_fn = getattr(module, f"run_{args.tool}")
-    dry = ["--dry-run"] if args.dry_run else []
+    forwarded = (["--dry-run"] if args.dry_run else []) + ["--timeout", f"{args.timeout:g}"]
 
     files = sorted(
         f
@@ -93,11 +103,12 @@ def run_batch(args):
 
     def attempt(entry, argv):
         try:
-            entry["result"] = run_fn(parser.parse_args(argv))
+            entry["result"] = run_tool(run_fn, parser.parse_args(argv))
             entry["ok"] = True
         except ImageSkillError as e:
             entry["ok"] = False
             entry["reason"] = str(e)
+            entry.update(timeout_fields(e))
             context = getattr(e, "payload", None) or getattr(e, "extra", None)
             if context:
                 entry["result"] = context
@@ -107,7 +118,7 @@ def run_batch(args):
     if args.tool in AGGREGATE_TOOLS:
         dest = os.path.join(out_dir, f"{args.tool}.{args.ext or 'png'}")
         if files:
-            results.append(attempt({"files": files, "output": dest}, files + ["-o", dest] + dry + tool_args))
+            results.append(attempt({"files": files, "output": dest}, files + ["-o", dest] + forwarded + tool_args))
     elif args.tool in PAIRED_TOOLS:
         against = os.path.realpath(args.against)
         if not os.path.isdir(against):
@@ -119,16 +130,16 @@ def run_batch(args):
             if not os.path.isfile(other):
                 results.append(dict(entry, ok=False, reason=f"no file named {os.path.basename(src)} in {args.against}"))
                 continue
-            results.append(attempt(entry, [src, other, "-o", dest] + dry + tool_args))
+            results.append(attempt(entry, [src, other, "-o", dest] + forwarded + tool_args))
     elif args.tool in DIR_TOOLS:
         for src in files:
             dest = os.path.join(out_dir, os.path.splitext(os.path.basename(src))[0])
-            results.append(attempt({"file": src, "output": dest}, [src, "-o", dest] + dry + tool_args))
+            results.append(attempt({"file": src, "output": dest}, [src, "-o", dest] + forwarded + tool_args))
     else:
         for src in files:
             base = os.path.splitext(os.path.basename(src))[0]
             dest = os.path.join(out_dir, f"{base}.{args.ext}" if args.ext else os.path.basename(src))
-            results.append(attempt({"file": src, "output": dest}, [src, "-o", dest] + dry + tool_args))
+            results.append(attempt({"file": src, "output": dest}, [src, "-o", dest] + forwarded + tool_args))
 
     all_ok = all(r["ok"] for r in results)
     return {"tool": args.tool, "count": len(results), "all_ok": all_ok, "results": results}
@@ -140,7 +151,7 @@ def main(argv=None):
         args = parse_args(argv)
         payload = run_batch(args)
     except ImageSkillError as e:
-        fail(str(e), as_json)
+        fail_error(e, as_json)
         return
     succeed(payload, args.json)
 

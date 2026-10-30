@@ -20,6 +20,7 @@ Config (Claude Desktop / Cursor / .mcp.json):
 """
 import json
 import os
+import signal
 import subprocess
 import sys
 
@@ -27,12 +28,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SCRIPTS = os.path.join(os.path.dirname(HERE), "scripts")
 sys.path.insert(0, SCRIPTS)
 import _contract  # noqa: E402
+from _common import _group_kwargs, kill_process_tree  # noqa: E402
 
 MODERN_VERSIONS = ("2026-07-28",)
 LEGACY_VERSIONS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
 SUPPORTED_VERSIONS = MODERN_VERSIONS + LEGACY_VERSIONS
 META_VERSION = "io.modelcontextprotocol/protocolVersion"
 DEFAULT_TIMEOUT = 600
+# Over a call's own `timeout` argument: the tool stops itself at its budget (exit 124,
+# code "timeout"); the server's ceiling only backs that up.
+TOOL_TIMEOUT_GRACE = 30
 
 
 class RpcError(Exception):
@@ -69,6 +74,32 @@ def _timeout():
     return None if value <= 0 else value
 
 
+def _run_script(cmd, ceiling):
+    """Run one tool script in its own process group. Past the ceiling the script gets
+    SIGTERM first - it then kills the ImageMagick process group it started - and is
+    killed with its whole tree 5 s later. Returns (returncode, stdout, stderr), or
+    (None, "", "") when the ceiling ran out."""
+    proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            text=True, **_group_kwargs())
+    try:
+        out, err = proc.communicate(timeout=ceiling)
+        return proc.returncode, out, err
+    except subprocess.TimeoutExpired:
+        if os.name != "nt":
+            try:
+                os.killpg(proc.pid, signal.SIGTERM)
+                proc.wait(timeout=5)
+            except Exception:
+                pass
+        kill_process_tree(proc)
+        try:
+            proc.communicate(timeout=10)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+        return None, "", ""
+
+
 def _error_result(text, structured=None):
     result = {"content": [{"type": "text", "text": text}], "isError": True}
     if structured is not None:
@@ -87,10 +118,14 @@ def call_tool(name, arguments):
     except ValueError as e:
         return _error_result(str(e))
     cmd = [sys.executable, os.path.join(SCRIPTS, spec["script"])] + argv
-    try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=_timeout())
-    except subprocess.TimeoutExpired:
-        return _error_result(f"{name} timed out after {_timeout():g} s (IMAGEMAGICK_SKILL_MCP_TIMEOUT)")
+    ceiling = _timeout()
+    tool_timeout = arguments.get("timeout")
+    if ceiling is not None and isinstance(tool_timeout, (int, float)) and not isinstance(tool_timeout, bool):
+        ceiling = max(ceiling, float(tool_timeout) + TOOL_TIMEOUT_GRACE)
+    returncode, out, err = _run_script(cmd, ceiling)
+    if returncode is None:
+        return _error_result(f"{name} timed out after {ceiling:g} s (IMAGEMAGICK_SKILL_MCP_TIMEOUT)")
+    proc = subprocess.CompletedProcess(cmd, returncode, out, err)
     stdout = proc.stdout.strip()
     try:
         structured = json.loads(stdout)
