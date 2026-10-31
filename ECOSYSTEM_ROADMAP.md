@@ -27,7 +27,7 @@ Not reachable from the agent. Contract fits via skill.id but has no provides[].
   - Done when: CI green on Windows
 - [x] **3. --timeout on every tool (RM-070)** — [#29](https://github.com/kajisho5/imagemagick-skill/pull/29)
   - Done when: test
-- [ ] **4. (agent side) SkillSpec image_prepare** — resize/pad/strip overlay assets for video-editing overlay and thumbnail
+- [x] **4. (agent side) SkillSpec image_prepare** — resize/pad/strip overlay assets for video-editing overlay and thumbnail — done in [video-production-agent#92](https://github.com/kajisho5/video-production-agent/pull/92) (ADR-077: image_strip / image_prepare / image_pad before edit.overlay; thumbnail sources not wired yet)
   - Done when: plan step selects imagemagick-skill/resize
 
 ---
