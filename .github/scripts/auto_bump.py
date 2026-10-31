@@ -8,8 +8,9 @@ throwaway git repository.
 
   - refuses to cross a major boundary: a major release is a hand-made package.json
     bump in a PR, never inferred from labels
-  - moves the version in package.json, .claude-plugin/plugin.json, docs/contract.md
-    (two anchors only) and docs/roadmap.md ("The released version today is ...")
+  - moves the version in package.json, .claude-plugin/plugin.json, skill.contract.json
+    (SkillPact: `skill.version` only), docs/contract.md (two anchors only) and
+    docs/roadmap.md ("The released version today is ...")
   - writes a CHANGELOG.md section: whatever sits under "## Unreleased" moves into it,
     followed by the commit subjects since the last tag read from `git log` at run time
     (never interpolated by the workflow: PR titles are attacker-controlled text), and
@@ -26,6 +27,8 @@ from bump_contract_md import bump_contract_md  # noqa: E402
 from bump_roadmap_md import bump_roadmap_md  # noqa: E402
 
 VERSION_FIELD = re.compile(r'("version":\s*")[^"]+(")')
+# skill.contract.json has other "version" keys (requirement ranges); only the one directly inside "skill" moves
+SKILL_VERSION_FIELD = re.compile(r'("skill":\s*\{[^{}]*?"version":\s*")[^"]+(")')
 
 
 def _read(path):
@@ -38,9 +41,9 @@ def _write(path, text):
         f.write(text)
 
 
-def bump_json_version(path, new):
+def bump_json_version(path, new, field=VERSION_FIELD):
     text = _read(path)
-    updated = VERSION_FIELD.sub(rf"\g<1>{new}\g<2>", text, count=1)
+    updated = field.sub(rf"\g<1>{new}\g<2>", text, count=1)
     if updated == text:
         raise SystemExit(f"{path}: version field not found or already {new}")
     _write(path, updated)
@@ -90,6 +93,7 @@ def main(root="."):
     path = lambda *p: os.path.join(root, *p)  # noqa: E731
     bump_json_version(path("package.json"), new)
     bump_json_version(path(".claude-plugin", "plugin.json"), new)
+    bump_json_version(path("skill.contract.json"), new, SKILL_VERSION_FIELD)
     _write(path("docs", "contract.md"), bump_contract_md(_read(path("docs", "contract.md")), old, new))
     _write(path("docs", "roadmap.md"), bump_roadmap_md(_read(path("docs", "roadmap.md")), old, new))
     section = changelog_section(old, new, root)

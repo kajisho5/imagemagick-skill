@@ -93,6 +93,20 @@ class DocsAgreeWithContractTests(unittest.TestCase):
         self.assertEqual(len(re.findall(r"The released version today is \*\*" + re.escape(version) + r"\*\*",
                                         _read("docs", "roadmap.md"))), 1)
 
+    def test_skillpact_contract_follows_the_native_contract(self):
+        # skill.contract.json (SkillPact, checked in CI by .github/workflows/skillpact.yml) restates the
+        # package version and the tool list; both must move with the native contract
+        skillpact = json.loads(_read("skill.contract.json"))
+        native = _contract.build_contract_payload()
+        self.assertEqual(skillpact["skill"]["name"], json.loads(_read("package.json"))["name"])
+        self.assertEqual(skillpact["skill"]["version"], json.loads(_read("package.json"))["version"])
+        self.assertEqual([c["entry"]["mcp_tool"] for c in skillpact["capabilities"]], [t["name"] for t in native["tools"]])
+        for cap in skillpact["capabilities"]:
+            tool = next(t for t in native["tools"] if t["name"] == cap["entry"]["mcp_tool"])
+            self.assertEqual(cap["entry"]["cli"], ["python3", f"$SKILL_DIR/{tool['executable']}"], cap["id"])
+            self.assertEqual("write" in cap["effects"], tool["writes_output"], cap["id"])
+        self.assertEqual(skillpact["permissions"]["network"], {"level": "none"})
+
     def test_plugin_and_marketplace_name_the_package(self):
         name = json.loads(_read("package.json"))["name"]
         self.assertEqual(json.loads(_read(".claude-plugin", "plugin.json"))["name"], name)

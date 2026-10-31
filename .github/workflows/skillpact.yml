@@ -1,0 +1,36 @@
+name: skillpact
+
+# skill.contract.json checked by kajisho5/skillpact's GitHub Action: the contract must be
+# valid and its declared conformance tests must pass in SkillPact's bubblewrap sandbox
+# (no network, read-only file system, every started program in the exec scope): level L2.
+# L3 also needs integrity over every file and an author signature (docs/design-decisions.md).
+#
+# Pinned to a full commit SHA. Until kajisho5/skillpact#33 merges this is that PR's head
+# commit; repoint it to the merge commit (or a release tag's SHA) after it merges.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  skillpact:
+    # ImageMagick 6 from apt, as in test.yml's ubuntu-with-imagemagick job: the tests run
+    # the tools for real (probe, resize, convert), and IM6's convert satisfies the
+    # contract's magick requirement.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install ImageMagick
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+      - id: skillpact
+        uses: kajisho5/skillpact@657bb09444ede85781229ca7c074a1c2a1c637ff # PR #33 head; repoint after merge
+        with:
+          path: .
+          min-level: L2
+      - run: echo "SkillPact level ${{ steps.skillpact.outputs.level }}"

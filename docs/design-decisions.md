@@ -215,6 +215,25 @@ say which sentence here no longer holds.
   `test_an_interpreter_that_is_not_python_3_is_passed_over`,
   `test_no_python_is_a_structured_error`.
 
+## SkillPact contract
+
+- **`skill.contract.json` restates the native contract for SkillPact; it does not replace
+  it.** `scripts/_contract.py` stays the single source of truth. The SkillPact contract was
+  drafted with `skillpact init` from `contract --json`, then confirmed by hand: every
+  writing tool has the `write` effect (init reads `produces_artifact`, this contract says
+  `writes_output`), and the exec scope names every program the scripts can start
+  (`python3`, ImageMagick 7 `magick`, ImageMagick 6 `convert` / `identify` / `compare` /
+  `montage` / `composite`, macOS `sips`) because the exec audit fails a test that starts
+  anything else. ImageMagick 6's `convert` counts as the `magick` requirement, as it does in
+  `_common.py`. It has no `integrity` section and no signature: integrity must list every
+  file, so it would have to be re-hashed and re-signed by the author on every PR; L3 is a
+  release-time step for later. `.github/workflows/skillpact.yml` runs kajisho5/skillpact's
+  Action on every PR and requires L2 (valid, and the four declared tests pass in its
+  bubblewrap sandbox with no network). The version and the tool list are pinned to the
+  native contract, and the release bump moves `skill.version`. Tests:
+  `test_skillpact_contract_follows_the_native_contract`,
+  `test_bump_moves_every_version_and_writes_changelog`.
+
 ## Releasing
 
 - **No release is ever cut for a major version automatically.** `major`/`breaking` labels
