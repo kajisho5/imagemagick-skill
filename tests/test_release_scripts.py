@@ -89,6 +89,11 @@ class DocBumpTests(unittest.TestCase):
 
 
 @unittest.skipUnless(GIT, "requires git")
+def _root_file(rel):
+    with open(os.path.join(ROOT, rel), encoding="utf-8") as f:
+        return f.read()
+
+
 class AutoBumpInFixtureRepoTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -97,7 +102,7 @@ class AutoBumpInFixtureRepoTests(unittest.TestCase):
         self.assertNotEqual(os.path.realpath(self.repo), os.path.realpath(ROOT))
         os.makedirs(os.path.join(self.repo, ".claude-plugin"))
         os.makedirs(os.path.join(self.repo, "docs"))
-        for rel in ("package.json", ".claude-plugin/plugin.json", "docs/contract.md", "docs/roadmap.md", "CHANGELOG.md"):
+        for rel in ("package.json", ".claude-plugin/plugin.json", "skill.contract.json", "docs/contract.md", "docs/roadmap.md", "CHANGELOG.md"):
             shutil.copy(os.path.join(ROOT, rel), os.path.join(self.repo, rel))
         with open(os.path.join(ROOT, "package.json")) as f:
             self.old = json.load(f)["version"]
@@ -129,6 +134,11 @@ class AutoBumpInFixtureRepoTests(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stderr)
         self.assertEqual(json.loads(self.read("package.json"))["version"], self.new)
         self.assertEqual(json.loads(self.read(".claude-plugin/plugin.json"))["version"], self.new)
+        skillpact = json.loads(self.read("skill.contract.json"))
+        self.assertEqual(skillpact["skill"]["version"], self.new)
+        before = json.loads(_root_file("skill.contract.json"))
+        before["skill"]["version"] = self.new
+        self.assertEqual(skillpact, before)   # requirement ranges and everything else untouched
         self.assertIn(f"(`{self.new}`)", self.read("docs/contract.md"))
         self.assertIn(f"The released version today is **{self.new}**", self.read("docs/roadmap.md"))
         changelog = self.read("CHANGELOG.md")

@@ -6,7 +6,11 @@ under "Unreleased" in a PR move into that release's section.
 
 ## Unreleased
 
-(nothing yet)
+- CI: `skill.contract.json`, a SkillPact contract for the 19 tools (drafted from
+  `contract --json`, scopes confirmed, four sandboxed conformance tests: probe, exact
+  resize, refusal to overwrite, PNG to JPEG), checked on every PR by kajisho5/skillpact's
+  GitHub Action in `.github/workflows/skillpact.yml` at level L2. The release bump also
+  moves the contract's `skill.version`. Not part of the npm package.
 
 ## 0.8.1
 

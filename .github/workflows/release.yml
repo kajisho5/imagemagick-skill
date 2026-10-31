@@ -9,7 +9,7 @@ name: release
 #     fix -> patch, unlabeled -> patch, chore/ci/docs/test/refactor/dependencies only
 #     -> nothing to release, major/breaking -> refused). auto_bump.py then moves
 #     package.json, .claude-plugin/plugin.json, docs/contract.md and docs/roadmap.md
-#     to it and writes the CHANGELOG.md section, and this job pushes that commit.
+#     (and skill.contract.json's skill.version) to it and writes the CHANGELOG.md section, and this job pushes that commit.
 #   - If a PR bumped package.json by hand (and wrote its own CHANGELOG.md section),
 #     that version is used as-is.
 #
@@ -89,7 +89,7 @@ jobs:
           python3 .github/scripts/auto_bump.py
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json .claude-plugin/plugin.json docs/contract.md docs/roadmap.md CHANGELOG.md
+          git add package.json .claude-plugin/plugin.json skill.contract.json docs/contract.md docs/roadmap.md CHANGELOG.md
           git commit -m "chore(release): bump version to ${NEW_VERSION} [skip ci]"
           # A merge that landed meanwhile makes the push non-fast-forward; replay on top of
           # it (a real conflict here should fail the run).
