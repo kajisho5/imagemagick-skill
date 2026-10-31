@@ -29,7 +29,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y imagemagick
       - id: skillpact
-        uses: kajisho5/skillpact@657bb09444ede85781229ca7c074a1c2a1c637ff # PR #33 head; repoint after merge
+        uses: kajisho5/skillpact@90895aa3920b503e77c29fa5ff231aeba8251a32 # skillpact #33 merge commit
         with:
           path: .
           min-level: L2
