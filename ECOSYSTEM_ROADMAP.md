@@ -29,6 +29,12 @@ The agent prepares overlay images with `strip` / `resize` / `pad` (step 4, video
   - Done when: test
 - [x] **4. (agent side) SkillSpec image_prepare** — resize/pad/strip overlay assets for video-editing overlay and thumbnail — done in [video-production-agent#92](https://github.com/kajisho5/video-production-agent/pull/92) (ADR-077: image_strip / image_prepare / image_pad before edit.overlay; thumbnail sources not wired yet)
   - Done when: plan step selects imagemagick-skill/resize
+- [ ] **5. Logo variants for a brand kit** — from one logo: mono, white and black versions, a clear-space padded version, standard sizes, and the main colours extracted as a palette (with their share of the image). Field review 2026-11-05 (Velisa ROADMAP, third round)
+  - なぜ要るか：テロップ・スティンガー・サムネイルで使うロゴの色違いと余白付きを、毎回手で作らずに揃う
+  - Done when: a fixture logo yields every variant at the stated sizes and a palette of at most N colours
+- [ ] **6. Alpha hygiene for stills** — straight ↔ premultiplied conversion, fringe cleanup at the edges of a cut-out logo, and a key (matte) image from the alpha for switchers that take still key / fill
+  - なぜ要るか：ロゴ PNG の白い縁や、スイッチャー用の静止画キー／フィルを確実に作れる
+  - Done when: a fixture with a white fringe loses it; the key image's pixels equal the alpha
 
 ---
 Engine for every media operation: [ffmpeg-skill](https://github.com/kajisho5/ffmpeg-skill) (3.x, 42 tools, contract_version 2.0; treated as complete, proposals go to Velisa's ROADMAP). Orchestrator: [video-production-agent](https://github.com/kajisho5/video-production-agent).
