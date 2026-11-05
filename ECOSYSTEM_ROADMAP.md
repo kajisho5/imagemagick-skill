@@ -5,7 +5,7 @@ Written from a read-only audit of this repository on 2026-10-30. Each step below
 
 ## Where it stands
 
-v0.7.1. 19 tools (probe, convert, resize, thumb, strip, trim, check, look, compare, optimize, crop, pad, rotate, adjust, overlay, montage, icons, preset, batch); npm installer + MCP. 173 tests; CI on Ubuntu (no IM / IM6) and macOS (sips / IM7), no Windows.
+v0.8.1. 19 tools (probe, convert, resize, thumb, strip, trim, check, look, compare, optimize, crop, pad, rotate, adjust, overlay, montage, icons, preset, batch); npm installer + MCP. 173 tests; CI on Ubuntu (no IM / IM6), macOS (sips / IM7) and Windows with IM7 (step 2); SkillPact L2 on every PR.
 
 ## What this repository owns
 
@@ -17,7 +17,7 @@ v0.7.1. 19 tools (probe, convert, resize, thumb, strip, trim, check, look, compa
 
 ## Wiring
 
-Not reachable from the agent. Contract fits via skill.id but has no provides[].
+The agent prepares overlay images with `strip` / `resize` / `pad` (step 4, video-production-agent#92, pinned 0.8.1); `still_image_edit` and thumbnail sources stay a handoff. `provides[]` in the contract since step 1.
 
 ## Steps
 
@@ -31,4 +31,4 @@ Not reachable from the agent. Contract fits via skill.id but has no provides[].
   - Done when: plan step selects imagemagick-skill/resize
 
 ---
-Engine for every media operation: [ffmpeg-skill](https://github.com/kajisho5/ffmpeg-skill) (42 tools, treated as complete). Orchestrator: [video-production-agent](https://github.com/kajisho5/video-production-agent).
+Engine for every media operation: [ffmpeg-skill](https://github.com/kajisho5/ffmpeg-skill) (3.x, 42 tools, contract_version 2.0; treated as complete, proposals go to Velisa's ROADMAP). Orchestrator: [video-production-agent](https://github.com/kajisho5/video-production-agent).
