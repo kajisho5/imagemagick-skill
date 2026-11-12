@@ -6,6 +6,12 @@ under "Unreleased" in a PR move into that release's section.
 
 ## Unreleased
 
+(nothing yet)
+
+## 0.10.0
+
+_Automated release: version and notes generated from pull requests merged since 0.9.0._
+
 - New tool `brandkit` (21 tools): logo variants for a brand kit from one cut-out logo.
   It writes the logo as it is (`color`), greyscale (`mono`), white and black silhouettes
   and a `clearspace` version with a transparent margin of `--clear-space` pixels, each at
@@ -14,6 +20,8 @@ under "Unreleased" in a PR move into that release's section.
   an argument; a logo without alpha is refused. Additive contract change: one new tool.
 
 (nothing yet)
+
+- feat: brandkit tool - logo variants for a brand kit (color, mono, white, black, clear space, sizes, palette) (#40)
 
 ## 0.9.0
 
