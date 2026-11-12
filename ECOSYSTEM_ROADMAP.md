@@ -5,7 +5,7 @@ Written from a read-only audit of this repository on 2026-10-30. Each step below
 
 ## Where it stands
 
-v0.8.1. 19 tools (probe, convert, resize, thumb, strip, trim, check, look, compare, optimize, crop, pad, rotate, adjust, overlay, montage, icons, preset, batch); npm installer + MCP. 173 tests; CI on Ubuntu (no IM / IM6), macOS (sips / IM7) and Windows with IM7 (step 2); SkillPact L2 on every PR.
+v0.8.1. 20 tools (probe, convert, resize, thumb, strip, trim, check, look, compare, optimize, crop, pad, rotate, adjust, overlay, montage, icons, alpha, preset, batch); npm installer + MCP. 173 tests; CI on Ubuntu (no IM / IM6), macOS (sips / IM7) and Windows with IM7 (step 2); SkillPact L2 on every PR.
 
 ## What this repository owns
 
@@ -32,7 +32,7 @@ The agent prepares overlay images with `strip` / `resize` / `pad` (step 4, video
 - [ ] **5. Logo variants for a brand kit** — from one logo: mono, white and black versions, a clear-space padded version, standard sizes, and the main colours extracted as a palette (with their share of the image). Field review 2026-11-05 (Velisa ROADMAP, third round)
   - なぜ要るか：テロップ・スティンガー・サムネイルで使うロゴの色違いと余白付きを、毎回手で作らずに揃う
   - Done when: a fixture logo yields every variant at the stated sizes and a palette of at most N colours
-- [ ] **6. Alpha hygiene for stills** — straight ↔ premultiplied conversion, fringe cleanup at the edges of a cut-out logo, and a key (matte) image from the alpha, for deliveries that take a still as key and fill
+- [x] **6. Alpha hygiene for stills** — [#39](https://github.com/kajisho5/imagemagick-skill/pull/39) (`alpha.py`: report, premultiply/unpremultiply, defringe `--matte`, key, fill) — straight ↔ premultiplied conversion, fringe cleanup at the edges of a cut-out logo, and a key (matte) image from the alpha, for deliveries that take a still as key and fill
   - なぜ要るか：ロゴ PNG の白い縁や、キー／フィル2枚で渡す静止画を確実に作れる
   - Done when: a fixture with a white fringe loses it; the key image's pixels equal the alpha
 

@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.join(ROOT, ".github", "scripts"))
 import _contract  # noqa: E402
 import contract_md  # noqa: E402
 from _common import which_magick  # noqa: E402
-from fixtures import write_bordered_png, write_solid_png  # noqa: E402
+from fixtures import write_bordered_png, write_fringed_logo_png, write_solid_png  # noqa: E402
 
 
 def _read(*parts):
@@ -189,6 +189,8 @@ class OutputSchemaConformanceTests(unittest.TestCase):
         write_solid_png(os.path.join(self.dir_in, "a.png"), 30, 20)
         self.square = os.path.join(self.tmp.name, "square.png")
         write_solid_png(self.square, 600, 600)
+        self.alpha_src = os.path.join(self.tmp.name, "alpha.png")
+        write_fringed_logo_png(self.alpha_src)
 
     def invocations(self):
         o = lambda n: os.path.join(self.tmp.name, n)  # noqa: E731
@@ -210,6 +212,7 @@ class OutputSchemaConformanceTests(unittest.TestCase):
             "overlay": [self.src, "-o", o("ov.png"), "--image", os.path.join(self.dir_in, "a.png"), "--position", "center"],
             "montage": [self.src, os.path.join(self.dir_in, "a.png"), "-o", o("mont.png"), "--background", "white"],
             "icons": [self.square, "-o", o("icons")],
+            "alpha": [self.alpha_src, "-o", o("key.png"), "--mode", "key"],
             "preset": [self.src, "-o", o("preset.png"), "--preset", "pwa-icon-192", "--mode", "fit"],
             "batch": ["thumb", "-i", self.dir_in, "-o", o("batch-out"), "--", "--long-edge", "10"],
         }
@@ -225,7 +228,7 @@ class OutputSchemaConformanceTests(unittest.TestCase):
         return proc, json.loads(proc.stdout)
 
     def input_digests(self):
-        paths = [self.src, self.square, os.path.join(self.dir_in, "a.png")]
+        paths = [self.src, self.square, self.alpha_src, os.path.join(self.dir_in, "a.png")]
         digests = {}
         for path in paths:
             with open(path, "rb") as f:

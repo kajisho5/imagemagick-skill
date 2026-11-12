@@ -3116,6 +3116,209 @@
       }
     },
     {
+      "id": "image.alpha",
+      "summary": "Report alpha present/used, convert straight <-> premultiplied, remove an edge fringe against a given matte colour, or write the key (matte) or fill of a still.",
+      "role": "execution",
+      "entry": {
+        "cli": [
+          "python3",
+          "$SKILL_DIR/scripts/alpha.py"
+        ],
+        "mcp_tool": "alpha"
+      },
+      "effects": [
+        "read",
+        "exec",
+        "write"
+      ],
+      "destructive": false,
+      "idempotent": false,
+      "dry_run": {
+        "supported": true,
+        "flag": "--dry-run",
+        "effects": [
+          "read"
+        ]
+      },
+      "inputs": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "string",
+            "description": "image file to read (never modified)",
+            "x-cli": "positional",
+            "x-positional": true
+          },
+          "output": {
+            "type": "string",
+            "description": "file to write (required unless --mode report); must differ from the input",
+            "x-cli": [
+              "-o",
+              "--output"
+            ]
+          },
+          "overwrite": {
+            "type": "boolean",
+            "description": "allow replacing an existing output file",
+            "x-cli": [
+              "--overwrite"
+            ]
+          },
+          "json": {
+            "type": "boolean",
+            "description": "print one JSON object (ok:true/false) instead of text",
+            "x-cli": [
+              "--json"
+            ],
+            "x-cli-only": true
+          },
+          "dry_run": {
+            "type": "boolean",
+            "description": "print the backend command that would run, write nothing",
+            "x-cli": [
+              "--dry-run"
+            ]
+          },
+          "timeout": {
+            "type": "number",
+            "description": "seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code \"timeout\", exit 124",
+            "default": 300,
+            "x-cli": [
+              "--timeout"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "description": "what to do (see the script's docstring)",
+            "enum": [
+              "report",
+              "premultiply",
+              "unpremultiply",
+              "defringe",
+              "key",
+              "fill"
+            ],
+            "x-cli": [
+              "--mode"
+            ]
+          },
+          "matte": {
+            "type": "string",
+            "description": "defringe only: the opaque colour the edges were blended with, e.g. white or #FFFFFF",
+            "x-cli": [
+              "--matte"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "input"
+        ]
+      },
+      "outputs": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "string"
+          },
+          "output": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "premultiply",
+              "unpremultiply",
+              "defringe",
+              "key",
+              "fill"
+            ]
+          },
+          "matte": {
+            "type": "string",
+            "description": "defringe only: the colour taken back out of the edges"
+          },
+          "actual": {
+            "type": "object",
+            "description": "{width, height} in pixels"
+          },
+          "has_alpha": {
+            "type": "boolean",
+            "description": "report: the input has an alpha channel; a write: the output has one (key and fill never do)"
+          },
+          "alpha_max_difference": {
+            "type": "number",
+            "description": "premultiply/unpremultiply/defringe: largest change of the alpha (0..1, at most one 8-bit step); key: largest difference between the key and the input's alpha"
+          },
+          "width": {
+            "type": "integer",
+            "description": "report only"
+          },
+          "height": {
+            "type": "integer",
+            "description": "report only"
+          },
+          "alpha_used": {
+            "type": "boolean",
+            "description": "report only: at least one pixel is not fully opaque"
+          },
+          "pixels": {
+            "type": "object",
+            "description": "report only: {opaque, transparent, partial} pixel counts (8-bit alpha levels 255, 0, and between)"
+          },
+          "alpha_min": {
+            "type": "number",
+            "description": "report only: lowest alpha, 0..1"
+          },
+          "alpha_max": {
+            "type": "number",
+            "description": "report only: highest alpha, 0..1"
+          },
+          "color_within_alpha": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "report only: every colour channel is at most its alpha (+1/255). false means the colour is straight; true is what a premultiplied image must show (an image that is mostly dark or opaque shows it too); null without alpha"
+          },
+          "backend": {
+            "type": "string",
+            "enum": [
+              "magick"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "input",
+          "has_alpha",
+          "backend"
+        ]
+      },
+      "requires": [
+        "python3"
+      ],
+      "requires_features": [],
+      "optional_features": [],
+      "x": {
+        "native": {
+          "id": "imagemagick-skill/alpha"
+        }
+      },
+      "effect_scopes": {
+        "exec": [
+          "python3",
+          "magick",
+          "convert",
+          "identify",
+          "compare",
+          "montage",
+          "composite",
+          "sips"
+        ]
+      }
+    },
+    {
       "id": "image.preset",
       "summary": "Resize to a named published size (og, instagram-*, youtube-thumbnail, ...) with fill, fit or pad; --list shows sizes and their sources.",
       "role": "execution",

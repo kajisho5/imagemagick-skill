@@ -113,6 +113,32 @@ say which sentence here no longer holds.
   GPS-free. Tests: `test_every_layout_imagemagick_emits`,
   `test_unparseable_is_unknown_not_false`, `test_heic_with_gps_is_detected_and_stripped`.
 
+- **`alpha` defringes by taking a named `--matte` colour back out, never by eroding the
+  edge, and has no default matte.** A logo cut from a white background carries edge
+  pixels that are `a*colour + (1-a)*white`; solving for the colour
+  (`(c - (1-a)*matte) / a`, clamped to 0..1) gives the straight colour back and leaves
+  the alpha exactly as it was, so the shape and its antialiasing are kept. Eroding or
+  thresholding the alpha would remove the fringe by removing edge pixels, which changes
+  the shape. Which colour the edges were blended with is something only the caller
+  knows. `unpremultiply` is the same formula with a black matte, and `premultiply` is
+  `c*a`; all three are refused into a format with no alpha channel, and the alpha of the
+  result is compared with the input's (at most one 8-bit step) or the output is deleted.
+  An 8-bit premultiplied file keeps only `round(c*a)` levels, so unpremultiplying a
+  pixel of low alpha cannot restore more precision than that: the round trip is exact to
+  about `255/alpha` levels, not to one. Tests: `test_defringe_removes_a_white_fringe`,
+  `test_premultiply_then_unpremultiply_round_trips`.
+
+- **`alpha --mode key` writes the alpha as a grey image and checks it pixel for pixel;
+  every mode but `report` refuses an input without an alpha channel.** A key that
+  differs from the alpha by more than one 8-bit step is deleted. An opaque image has no
+  key (it would be solid white), no fringe and nothing to premultiply, so copying it
+  would report success for a no-op. `fill` is the colour channels with alpha off
+  (straight); a premultiplied fill is `premultiply` first, then `fill`. `report`'s
+  `color_within_alpha` can prove that colour is straight (`false`), but `true` only
+  says the image could be premultiplied: a dark or fully opaque image shows it too.
+  Tests: `test_key_pixels_equal_the_alpha`, `test_refusals`,
+  `test_report_tells_present_used_and_absent`.
+
 ## Arguments and results
 
 - **A tool that runs out of `--timeout` kills ImageMagick's whole process group and
