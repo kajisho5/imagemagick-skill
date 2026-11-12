@@ -113,7 +113,7 @@ def report(magick, path):
     levels = _alpha_histogram(magick, path)
     opaque, transparent = levels.get(255, 0), levels.get(0, 0)
     partial = sum(levels.values()) - opaque - transparent
-    over = float(run([magick, f"{path}[0]", "-auto-orient", "-alpha", "set", "-fx", "max(max(u.r,u.g),u.b)-u.a",
+    over = float(run([magick, f"{path}[0]", "-auto-orient", "-colorspace", "sRGB", "-alpha", "set", "-fx", "max(max(u.r,u.g),u.b)-u.a",
                       "-alpha", "off", "-format", "%[fx:maxima]", "info:"])["stdout"].strip())
     payload.update(
         alpha_used=opaque != width * height,
@@ -127,6 +127,10 @@ def report(magick, path):
 
 def write_command(magick, mode, input_path, output_path, matte):
     head = [magick, f"{input_path}[0]", "-auto-orient"]
+    if mode in KEEPS_ALPHA:
+        # The pixel maths below is on R, G and B: a CMYK(A) input is converted first, or
+        # its black channel would be left out (an sRGB input is unchanged by this).
+        head += ["-colorspace", "sRGB"]
     if mode == "premultiply":
         ops = ["-alpha", "set", "-channel", "RGB", "-fx", "u*u.a", "+channel"]
     elif mode in ("unpremultiply", "defringe"):

@@ -89,6 +89,28 @@ class AlphaTests(unittest.TestCase):
                 for got, want in zip(after[p][:3], RGB):
                     self.assertLessEqual(abs(got - want), tolerance)
 
+    def test_defringe_uses_the_supplied_matte(self):
+        logo, out_path = self.path("blue-fringe.png"), self.path("clean.png")
+        write_fringed_logo_png(logo, SIZE, RGB, matte=(0, 0, 255))
+        code, out = self.alpha(logo, "-o", out_path, "--mode", "defringe", "--matte", "#0000FF")
+        self.assertEqual(code, 0, out)
+        after = pixels(out_path)
+        for p in self.partial():
+            tolerance = 2 + 255 / (2 * expected_alpha(*p))
+            for got, want in zip(after[p][:3], RGB):
+                self.assertLessEqual(abs(got - want), tolerance, p)
+
+    def test_cmyk_input_is_premultiplied_in_rgb(self):
+        cmyk, out_path = self.path("logo.tif"), self.path("pre.png")
+        subprocess.run([which_magick(), self.logo, "-colorspace", "CMYK", cmyk], check=True)
+        code, out = self.alpha(cmyk, "-o", out_path, "--mode", "premultiply")
+        self.assertEqual(code, 0, out)
+        src, got = pixels(self.logo), pixels(out_path)
+        for p in [(SIZE // 2, SIZE // 2)] + self.partial()[:20]:
+            a = expected_alpha(*p) / 255
+            for value, straight in zip(got[p][:3], src[p][:3]):
+                self.assertLessEqual(abs(value - straight * a), 3, p)
+
     def test_key_pixels_equal_the_alpha(self):
         out_path = self.path("key.png")
         code, out = self.alpha(self.logo, "-o", out_path, "--mode", "key")
