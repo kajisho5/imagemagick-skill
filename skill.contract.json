@@ -3,7 +3,7 @@
   "kind": "tool",
   "skill": {
     "name": "imagemagick-skill",
-    "version": "0.8.1",
+    "version": "0.9.0",
     "license": "MIT",
     "source": "https://github.com/kajisho5/imagemagick-skill",
     "native_contract": {

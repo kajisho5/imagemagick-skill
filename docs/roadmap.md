@@ -1,6 +1,6 @@
 # Roadmap
 
-The released version today is **0.8.1** (notes in CHANGELOG.md); **0.6.1** — GPS detection reads the raw EXIF block (HEIC
+The released version today is **0.9.0** (notes in CHANGELOG.md); **0.6.1** — GPS detection reads the raw EXIF block (HEIC
 included, which ImageMagick 6 never parses), and `strip` refuses an output that may
 still carry GPS.
 

@@ -6,6 +6,12 @@ under "Unreleased" in a PR move into that release's section.
 
 ## Unreleased
 
+(nothing yet)
+
+## 0.9.0
+
+_Automated release: version and notes generated from pull requests merged since 0.8.1._
+
 - New tool `alpha` (20 tools): alpha hygiene for stills. `--mode report` says whether an
   image has an alpha channel and uses it (opaque / partial / transparent pixel counts,
   min and max alpha, and whether every colour is within its alpha); `premultiply` and
@@ -19,6 +25,17 @@ under "Unreleased" in a PR move into that release's section.
   resize, refusal to overwrite, PNG to JPEG), checked on every PR by kajisho5/skillpact's
   GitHub Action in `.github/workflows/skillpact.yml` at level L2. The release bump also
   moves the contract's `skill.version`. Not part of the npm package.
+
+- feat: alpha tool - alpha hygiene for stills (report, premultiply, defringe, key/fill) (#39)
+- chore(deps): Bump kajisho5/skillpact from 90895aa3920b503e77c29fa5ff231aeba8251a32 to acfb47121a0b64c8b043db97f3c074b639826f77 (#38)
+- docs(roadmap): no live-streaming context (out of scope) (#37)
+- docs(roadmap): field review steps 5-6 (2026-11-05) (#36)
+- docs(roadmap): bring status and wiring up to date (2026-11-05 review) (#35)
+- chore(deps): Bump actions/setup-python from 5 to 7 (#26)
+- chore(deps): Bump github/codeql-action from 3 to 4 (#25)
+- docs: tick roadmap step 4 (agent-side image_prepare) (#34)
+- ci: check skill.contract.json with kajisho5/skillpact's Action (L2) (#33)
+- ci: pin third-party actions by commit SHA (#32)
 
 ## 0.8.1
 
