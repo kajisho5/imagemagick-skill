@@ -81,7 +81,7 @@ def _matte_rgb(magick, color):
 
 def _alpha_histogram(magick, path):
     """{8-bit alpha level: pixel count} of the first frame, as displayed."""
-    out = run([magick, f"{path}[0]", "-auto-orient", "-alpha", "extract", "-depth", "8",
+    out = run([magick, f"{path}[0]", "-auto-orient", "-colorspace", "sRGB", "-alpha", "extract", "-depth", "8",
                "-format", "%c", "histogram:info:"])["stdout"]
     levels = {}
     for line in out.splitlines():
@@ -97,8 +97,8 @@ def _alpha_histogram(magick, path):
 def _alpha_max_difference(magick, a, b):
     """Largest per-pixel difference (0..1) between a's alpha and b's alpha-or-grey.
     b is read as its alpha when it has one, else as its grey level (a key image)."""
-    b_args = [b, "-alpha", "extract"] if _alpha_present(magick, b) else [b, "-colorspace", "gray"]
-    out = run([magick, f"{a}[0]", "-auto-orient", "-alpha", "extract", "(", *b_args, ")",
+    b_args = [b, "-colorspace", "sRGB"] + (["-alpha", "extract"] if _alpha_present(magick, b) else ["-colorspace", "gray"])
+    out = run([magick, f"{a}[0]", "-auto-orient", "-colorspace", "sRGB", "-alpha", "extract", "(", *b_args, ")",
                "-compose", "difference", "-composite", "-format", "%[fx:maxima]", "info:"])["stdout"]
     return float(out.strip())
 
@@ -126,11 +126,10 @@ def report(magick, path):
 
 
 def write_command(magick, mode, input_path, output_path, matte):
-    head = [magick, f"{input_path}[0]", "-auto-orient"]
-    if mode in KEEPS_ALPHA:
-        # The pixel maths below is on R, G and B: a CMYK(A) input is converted first, or
-        # its black channel would be left out (an sRGB input is unchanged by this).
-        head += ["-colorspace", "sRGB"]
+    # Every mode works in sRGB: the pixel maths is on R, G and B (a CMYK(A) input would
+    # leave its black channel out), and ImageMagick 7 keeps an extracted alpha in the
+    # source's colourspace, where a CMYK grey reads back inverted. sRGB input is unchanged.
+    head = [magick, f"{input_path}[0]", "-auto-orient", "-colorspace", "sRGB"]
     if mode == "premultiply":
         ops = ["-alpha", "set", "-channel", "RGB", "-fx", "u*u.a", "+channel"]
     elif mode in ("unpremultiply", "defringe"):
