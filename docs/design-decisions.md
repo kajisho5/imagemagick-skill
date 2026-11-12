@@ -139,6 +139,25 @@ say which sentence here no longer holds.
   Tests: `test_key_pixels_equal_the_alpha`, `test_refusals`,
   `test_report_tells_present_used_and_absent`.
 
+- **`brandkit` takes every size, the clear space and the palette size as arguments, and
+  needs a logo with alpha.** Which sizes a brand kit ships and how much clear space a
+  mark needs are brand decisions, so `--sizes`, `--clear-space` and `--palette` have no
+  defaults, and a size above the logo's long edge is refused (never upscaled, as in
+  `icons`). The white and black versions are the logo's shape filled with one colour; a
+  logo without alpha has no shape, so it is refused instead of turning into a white or
+  black rectangle. The clear space is in pixels of the full-size logo and scales with it,
+  so every size keeps the same proportions. Tests:
+  `test_every_variant_at_the_stated_sizes_and_a_palette_of_at_most_n`, `test_brandkit_refusals`.
+
+- **`brandkit`'s palette is the largest `--palette` colours of a 32-colour quantisation,
+  not the logo merged into `--palette` colours.** Merging three flat colours into two
+  reports an average that appears nowhere in the logo; picking the largest of a finer
+  quantisation reports colours that are there, with their real share of the pixels whose
+  alpha is at least 50%. The shares then add up to less than 1 when the logo has more
+  colours than were asked for, which is the honest answer. The palette only reports; the
+  skill still never chooses a colour. Test:
+  `test_every_variant_at_the_stated_sizes_and_a_palette_of_at_most_n`.
+
 ## Arguments and results
 
 - **A tool that runs out of `--timeout` kills ImageMagick's whole process group and

@@ -111,6 +111,7 @@ machine-readable spec (required/optional args per tool).
 | `montage.py` | Row or `--cols` grid with a required `--background`, `--gap`, `--labels` - e.g. README comparisons (magick only) |
 | `icons.py` | favicon.ico (16/32/48) + PNG icons (32/192/512) + apple-touch-icon.png and the HTML/manifest entries, from one square image (magick only) |
 | `alpha.py` | `--mode report` (alpha present/used, opaque/partial/transparent counts), `premultiply` / `unpremultiply`, `defringe --matte white`, `key` (grey matte = alpha) or `fill` for key-and-fill stills (magick only) |
+| `brandkit.py` | From one cut-out logo: color, mono, white, black and `--clear-space` padded PNGs at full size and every `--sizes` long edge, plus the `--palette` main colours with their share (magick only) |
 | `preset.py` | Named published sizes with their source (`--list`), `--mode fill\|fit\|pad` |
 | `batch.py` | Run a tool over every image in a folder (`look`/`montage` make one sheet; `icons` one folder per image; `compare` pairs with `--against DIR`) |
 | `_contract.py` | `contract` (tool spec) / `doctor` (environment check) |
@@ -123,6 +124,6 @@ no `magick` (Ubuntu/Debian apt; you still only call the scripts); macOS `sips` c
 `magick` isn't installed (`convert`, `resize` fit, `thumb`, centred `crop --aspect`,
 centred `pad` with a `#RRGGBB` colour, a single 90-degree `rotate` or flip, JPEG/HEIC
 `optimize`, `preset` fill/fit). `strip`, `trim`, `look`, `compare`, `overlay`,
-`adjust`, `montage`, `icons` and `alpha` always require `magick` - doctor's
+`adjust`, `montage`, `icons`, `alpha` and `brandkit` always require `magick` - doctor's
 `tools` field says what this machine can run. No cloud calls, no API keys, no pip dependencies -
 Python 3.9 standard library plus whichever binary is already on the machine.

@@ -213,6 +213,7 @@ class OutputSchemaConformanceTests(unittest.TestCase):
             "montage": [self.src, os.path.join(self.dir_in, "a.png"), "-o", o("mont.png"), "--background", "white"],
             "icons": [self.square, "-o", o("icons")],
             "alpha": [self.alpha_src, "-o", o("key.png"), "--mode", "key"],
+            "brandkit": [self.alpha_src, "-o", o("kit"), "--sizes", "20", "--clear-space", "2", "--palette", "3"],
             "preset": [self.src, "-o", o("preset.png"), "--preset", "pwa-icon-192", "--mode", "fit"],
             "batch": ["thumb", "-i", self.dir_in, "-o", o("batch-out"), "--", "--long-edge", "10"],
         }

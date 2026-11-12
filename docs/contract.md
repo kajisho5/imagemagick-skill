@@ -731,6 +731,39 @@ Output of `--json` on success (`ok: true`):
 | `color_within_alpha` | boolean or null | no | report only: every colour channel is at most its alpha (+1/255). false means the colour is straight; true is what a premultiplied image must show (an image that is mostly dark or opaque shows it too); null without alpha |
 | `backend` | string: `magick` | yes |  |
 
+### `brandkit`
+
+Logo variants for a brand kit from one cut-out logo: color, mono, white and black versions and a clear-space padded one, each at full size and every --sizes long edge, plus the main colours with their share.
+
+- Script: `scripts/brandkit.py` · role: execution · backends: magick
+- Writes a file: yes · `--dry-run`: yes · `--json`: yes · verify with: `look`
+
+| Argument | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `input` (positional) | string | yes |  | logo with a transparent background (never modified) |
+| `-o`, `--output-dir` | string | yes |  | folder to write the variants into (created if missing) |
+| `--sizes` | string | yes |  | long edges in pixels to write every variant at, e.g. 1024,512,256 (never above the logo's) |
+| `--clear-space` | string | yes |  | transparent margin on every side of the clearspace variant, in pixels of the full-size logo |
+| `--palette` | string | yes |  | report at most this many main colours, largest share first (2-32) |
+| `--overwrite` | boolean | no |  | allow replacing existing variant files |
+| `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
+| `--dry-run` | boolean | no |  | print the backend commands that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
+
+Output of `--json` on success (`ok: true`):
+
+| Key | Type | Always present | Description |
+| --- | --- | --- | --- |
+| `ok` | boolean | yes | `true` |
+| `input` | string | yes |  |
+| `output_dir` | string | yes |  |
+| `original` | object | yes | {width, height} in pixels |
+| `clear_space` | integer | yes | transparent margin in pixels of the full-size logo |
+| `files` | array | yes | per file: {path, variant (color\|mono\|white\|black\|clearspace), long_edge, width, height} |
+| `palette` | array | yes | at most --palette {hex, share} entries, largest share first; share is the fraction of the logo's pixels with alpha >= 50% |
+| `palette_pixels` | integer | yes | pixels the palette shares are counted over |
+| `backend` | string: `magick` | yes |  |
+
 ### `preset`
 
 Resize to a named published size (og, instagram-*, youtube-thumbnail, ...) with fill, fit or pad; --list shows sizes and their sources.

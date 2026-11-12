@@ -3319,6 +3319,176 @@
       }
     },
     {
+      "id": "image.brandkit",
+      "summary": "Write color, mono, white, black and clear-space variants of a cut-out logo at given sizes, and report its main colours with their share.",
+      "role": "execution",
+      "entry": {
+        "cli": [
+          "python3",
+          "$SKILL_DIR/scripts/brandkit.py"
+        ],
+        "mcp_tool": "brandkit"
+      },
+      "effects": [
+        "read",
+        "exec",
+        "write"
+      ],
+      "destructive": false,
+      "idempotent": false,
+      "dry_run": {
+        "supported": true,
+        "flag": "--dry-run",
+        "effects": [
+          "read"
+        ]
+      },
+      "inputs": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "string",
+            "description": "logo with a transparent background (never modified)",
+            "x-cli": "positional",
+            "x-positional": true
+          },
+          "output_dir": {
+            "type": "string",
+            "description": "folder to write the variants into (created if missing)",
+            "x-cli": [
+              "-o",
+              "--output-dir"
+            ]
+          },
+          "sizes": {
+            "type": "string",
+            "description": "long edges in pixels to write every variant at, e.g. 1024,512,256 (never above the logo's)",
+            "x-cli": [
+              "--sizes"
+            ]
+          },
+          "clear_space": {
+            "type": "string",
+            "description": "transparent margin on every side of the clearspace variant, in pixels of the full-size logo",
+            "x-cli": [
+              "--clear-space"
+            ]
+          },
+          "palette": {
+            "type": "string",
+            "description": "report at most this many main colours, largest share first (2-32)",
+            "x-cli": [
+              "--palette"
+            ]
+          },
+          "overwrite": {
+            "type": "boolean",
+            "description": "allow replacing existing variant files",
+            "x-cli": [
+              "--overwrite"
+            ]
+          },
+          "json": {
+            "type": "boolean",
+            "description": "print one JSON object (ok:true/false) instead of text",
+            "x-cli": [
+              "--json"
+            ],
+            "x-cli-only": true
+          },
+          "dry_run": {
+            "type": "boolean",
+            "description": "print the backend commands that would run, write nothing",
+            "x-cli": [
+              "--dry-run"
+            ]
+          },
+          "timeout": {
+            "type": "number",
+            "description": "seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code \"timeout\", exit 124",
+            "default": 300,
+            "x-cli": [
+              "--timeout"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "input"
+        ]
+      },
+      "outputs": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "string"
+          },
+          "output_dir": {
+            "type": "string"
+          },
+          "original": {
+            "type": "object",
+            "description": "{width, height} in pixels"
+          },
+          "clear_space": {
+            "type": "integer",
+            "description": "transparent margin in pixels of the full-size logo"
+          },
+          "files": {
+            "type": "array",
+            "description": "per file: {path, variant (color|mono|white|black|clearspace), long_edge, width, height}"
+          },
+          "palette": {
+            "type": "array",
+            "description": "at most --palette {hex, share} entries, largest share first; share is the fraction of the logo's pixels with alpha >= 50%"
+          },
+          "palette_pixels": {
+            "type": "integer",
+            "description": "pixels the palette shares are counted over"
+          },
+          "backend": {
+            "type": "string",
+            "enum": [
+              "magick"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "input",
+          "output_dir",
+          "original",
+          "clear_space",
+          "files",
+          "palette",
+          "palette_pixels",
+          "backend"
+        ]
+      },
+      "requires": [
+        "python3"
+      ],
+      "requires_features": [],
+      "optional_features": [],
+      "x": {
+        "native": {
+          "id": "imagemagick-skill/brandkit"
+        }
+      },
+      "effect_scopes": {
+        "exec": [
+          "python3",
+          "magick",
+          "convert",
+          "identify",
+          "compare",
+          "montage",
+          "composite",
+          "sips"
+        ]
+      }
+    },
+    {
       "id": "image.preset",
       "summary": "Resize to a named published size (og, instagram-*, youtube-thumbnail, ...) with fill, fit or pad; --list shows sizes and their sources.",
       "role": "execution",

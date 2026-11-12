@@ -37,7 +37,7 @@ npx imagemagick-skill
 
 Every frame is the real output of the command under it, and every number on a frame is read from that command's `--json` result. **[The commands and their JSON results →](docs/demos.md)** The inputs are drawn by ImageMagick in `python3 demos/build.py`, so you can rebuild every frame yourself. No photographs, people or third-party artwork are used.
 
-`imagemagick-skill` is an [Agent Skill](https://docs.anthropic.com/en/docs/agents-and-tools/agent-skills) for Claude Code, Cursor, Codex and any agent that reads `SKILL.md`. It gives the agent a fixed workflow: probe, then edit into a new file, then check, then look. It ships **20 tools** that do the work with ImageMagick, and with macOS `sips` where no ImageMagick is installed. They are aimed at the images that end up in a repository:
+`imagemagick-skill` is an [Agent Skill](https://docs.anthropic.com/en/docs/agents-and-tools/agent-skills) for Claude Code, Cursor, Codex and any agent that reads `SKILL.md`. It gives the agent a fixed workflow: probe, then edit into a new file, then check, then look. It ships **21 tools** that do the work with ImageMagick, and with macOS `sips` where no ImageMagick is installed. They are aimed at the images that end up in a repository:
 
 - iPhone HEIC photos
 - screenshots
@@ -189,7 +189,7 @@ flowchart LR
 
 ## Tools
 
-20 tools, all Python 3.9 standard library, all with `--help`, `--json`, `--timeout` (seconds, default 300; on expiry ImageMagick's whole process group is killed and the tool fails with `"code": "timeout"`, exit 124) and a non-zero exit with a reason on failure. Every tool that writes a file also has `--dry-run` and `--overwrite`. The **sips** column says what still works on a Mac without ImageMagick.
+21 tools, all Python 3.9 standard library, all with `--help`, `--json`, `--timeout` (seconds, default 300; on expiry ImageMagick's whole process group is killed and the tool fails with `"code": "timeout"`, exit 124) and a non-zero exit with a reason on failure. Every tool that writes a file also has `--dry-run` and `--overwrite`. The **sips** column says what still works on a Mac without ImageMagick.
 
 **Inspect and verify**
 
@@ -228,6 +228,7 @@ flowchart LR
 | `adjust.py` | Explicit levels, brightness, contrast, saturation, blur and sharpen. No "auto" | – |
 | `montage.py` | Row or `--cols` grid with a required `--background`, `--gap` and `--labels` | – |
 | `icons.py` | favicon.ico (16/32/48), PNG icons (32/192/512), apple-touch-icon.png, plus the `<link>` tags and manifest entries | – |
+| `brandkit.py` | Logo variants for a brand kit: color, mono, white and black versions and a `--clear-space` padded one, each at full size and every `--sizes` long edge (never upscaled), plus the `--palette` main colours with their share | – |
 | `alpha.py` | Alpha hygiene: `--mode report` says whether alpha is present and used; `premultiply`/`unpremultiply`; `defringe --matte white` takes a cut-out's white fringe back out of its edges; `key` writes the alpha as a grey matte and `fill` the colour, for key-and-fill deliveries | – |
 
 **Folders**
