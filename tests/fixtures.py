@@ -149,3 +149,38 @@ def write_jpeg_with_orientation(magick_bin, base_png_path, dest_jpg_path, orient
         f.write(jpeg_bytes[:2])
         f.write(build_exif_orientation_app1(orientation))
         f.write(jpeg_bytes[2:])
+
+
+def write_rgba_png(path, width, height, pixel_fn):
+    """pixel_fn(x, y) -> (r, g, b, a) for an 8-bit RGBA, no-filter PNG."""
+    sig = b"\x89PNG\r\n\x1a\n"
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
+    raw = bytearray()
+    for y in range(height):
+        raw.append(0)
+        for x in range(width):
+            raw.extend(pixel_fn(x, y))
+    with open(path, "wb") as f:
+        f.write(sig)
+        f.write(_chunk(b"IHDR", ihdr))
+        f.write(_chunk(b"IDAT", zlib.compress(bytes(raw), 9)))
+        f.write(_chunk(b"IEND", b""))
+
+
+def fringed_disc_alpha(x, y, cx, cy, radius):
+    """Coverage 0..255 of a disc with a 3-pixel soft edge."""
+    d = ((x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2) ** 0.5
+    return max(0, min(255, int(round((radius - d) / 3 * 255))))
+
+
+def write_fringed_logo_png(path, size=40, rgb=(200, 20, 40), matte=(255, 255, 255)):
+    """A cut-out disc whose soft edge was blended with `matte` (the white fringe of a
+    logo cut from a white background): straight alpha, colour = a*rgb + (1-a)*matte."""
+    def pixel(x, y):
+        a = fringed_disc_alpha(x, y, size / 2, size / 2, size / 2 - 4)
+        if a == 0:
+            return (0, 0, 0, 0)
+        f = a / 255
+        return tuple(int(round(f * c + (1 - f) * m)) for c, m in zip(rgb, matte)) + (a,)
+
+    write_rgba_png(path, size, size, pixel)

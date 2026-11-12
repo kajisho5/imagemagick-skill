@@ -692,6 +692,45 @@ Output of `--json` on success (`ok: true`):
 | `notes` | array | no | present when something needs the caller's attention |
 | `backend` | string: `magick` | yes |  |
 
+### `alpha`
+
+Alpha hygiene for stills: report alpha present/used, straight <-> premultiplied, defringe edges blended with a --matte colour, or write the key (matte) or fill of a key-and-fill pair.
+
+- Script: `scripts/alpha.py` · role: execution · backends: magick
+- Writes a file: yes · `--dry-run`: yes · `--json`: yes · verify with: `check`, `look`
+
+| Argument | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `input` (positional) | string | yes |  | image file to read (never modified) |
+| `-o`, `--output` | string | no |  | file to write (required unless --mode report); must differ from the input |
+| `--overwrite` | boolean | no |  | allow replacing an existing output file |
+| `--json` | boolean | no |  | print one JSON object (ok:true/false) instead of text |
+| `--dry-run` | boolean | no |  | print the backend command that would run, write nothing |
+| `--timeout` | number | no | `300` | seconds the whole run may take (default 300); when it runs out, ImageMagick and everything it started are killed and the tool fails with code "timeout", exit 124 |
+| `--mode` | string: `report` \| `premultiply` \| `unpremultiply` \| `defringe` \| `key` \| `fill` | yes |  | what to do (see the script's docstring) |
+| `--matte` | string | no |  | defringe only: the opaque colour the edges were blended with, e.g. white or #FFFFFF |
+
+Output of `--json` on success (`ok: true`):
+
+| Key | Type | Always present | Description |
+| --- | --- | --- | --- |
+| `ok` | boolean | yes | `true` |
+| `input` | string | yes |  |
+| `output` | string | no |  |
+| `mode` | string: `premultiply` \| `unpremultiply` \| `defringe` \| `key` \| `fill` | no |  |
+| `matte` | string | no | defringe only: the colour taken back out of the edges |
+| `actual` | object | no | {width, height} in pixels |
+| `has_alpha` | boolean | yes | report: the input has an alpha channel; a write: the output has one (key and fill never do) |
+| `alpha_max_difference` | number | no | premultiply/unpremultiply/defringe: largest change of the alpha (0..1, at most one 8-bit step); key: largest difference between the key and the input's alpha |
+| `width` | integer | no | report only |
+| `height` | integer | no | report only |
+| `alpha_used` | boolean | no | report only: at least one pixel is not fully opaque |
+| `pixels` | object | no | report only: {opaque, transparent, partial} pixel counts (8-bit alpha levels 255, 0, and between) |
+| `alpha_min` | number | no | report only: lowest alpha, 0..1 |
+| `alpha_max` | number | no | report only: highest alpha, 0..1 |
+| `color_within_alpha` | boolean or null | no | report only: every colour channel is at most its alpha (+1/255). false means the colour is straight; true is what a premultiplied image must show (an image that is mostly dark or opaque shows it too); null without alpha |
+| `backend` | string: `magick` | yes |  |
+
 ### `preset`
 
 Resize to a named published size (og, instagram-*, youtube-thumbnail, ...) with fill, fit or pad; --list shows sizes and their sources.

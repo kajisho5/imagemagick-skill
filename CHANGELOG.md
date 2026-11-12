@@ -6,6 +6,14 @@ under "Unreleased" in a PR move into that release's section.
 
 ## Unreleased
 
+- New tool `alpha` (20 tools): alpha hygiene for stills. `--mode report` says whether an
+  image has an alpha channel and uses it (opaque / partial / transparent pixel counts,
+  min and max alpha, and whether every colour is within its alpha); `premultiply` and
+  `unpremultiply` convert between straight and premultiplied colour; `defringe --matte
+  COLOR` takes the colour a cut-out's edges were blended with back out, keeping the alpha
+  as it was; `key` writes the alpha as a grey matte (checked pixel for pixel) and `fill`
+  the colour channels, for key-and-fill deliveries. ImageMagick only. Additive contract
+  change: one new tool, nothing else moved.
 - CI: `skill.contract.json`, a SkillPact contract for the 19 tools (drafted from
   `contract --json`, scopes confirmed, four sandboxed conformance tests: probe, exact
   resize, refusal to overwrite, PNG to JPEG), checked on every PR by kajisho5/skillpact's
