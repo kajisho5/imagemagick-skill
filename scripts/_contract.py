@@ -387,6 +387,23 @@ TOOL_META = {
         },
         output_required=["input", "has_alpha", "backend"],
     ),
+    "brandkit": dict(
+        description="Logo variants for a brand kit from one cut-out logo: color, mono, white and black versions and a clear-space padded one, each at full size and every --sizes long edge, plus the main colours with their share.",
+        role="execution",
+        backends=["magick"],
+        verify=["look"],
+        output_schema={
+            "input": {"type": "string"},
+            "output_dir": {"type": "string"},
+            "original": _WH,
+            "clear_space": {"type": "integer", "description": "transparent margin in pixels of the full-size logo"},
+            "files": {"type": "array", "description": "per file: {path, variant (color|mono|white|black|clearspace), long_edge, width, height}"},
+            "palette": {"type": "array", "description": "at most --palette {hex, share} entries, largest share first; share is the fraction of the logo's pixels with alpha >= 50%"},
+            "palette_pixels": {"type": "integer", "description": "pixels the palette shares are counted over"},
+            "backend": {"type": "string", "enum": ["magick"]},
+        },
+        output_required=["input", "output_dir", "original", "clear_space", "files", "palette", "palette_pixels", "backend"],
+    ),
     "preset": dict(
         description="Resize to a named published size (og, instagram-*, youtube-thumbnail, ...) with fill, fit or pad; --list shows sizes and their sources.",
         role="execution",

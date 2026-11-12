@@ -6,6 +6,13 @@ under "Unreleased" in a PR move into that release's section.
 
 ## Unreleased
 
+- New tool `brandkit` (21 tools): logo variants for a brand kit from one cut-out logo.
+  It writes the logo as it is (`color`), greyscale (`mono`), white and black silhouettes
+  and a `clearspace` version with a transparent margin of `--clear-space` pixels, each at
+  full size and at every `--sizes` long edge (never upscaled, every size verified), and
+  reports the `--palette` main colours of the logo with each one's share. Every value is
+  an argument; a logo without alpha is refused. Additive contract change: one new tool.
+
 (nothing yet)
 
 ## 0.9.0

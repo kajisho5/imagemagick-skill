@@ -5,7 +5,7 @@ Written from a read-only audit of this repository on 2026-10-30. Each step below
 
 ## Where it stands
 
-v0.8.1. 20 tools (probe, convert, resize, thumb, strip, trim, check, look, compare, optimize, crop, pad, rotate, adjust, overlay, montage, icons, alpha, preset, batch); npm installer + MCP. 173 tests; CI on Ubuntu (no IM / IM6), macOS (sips / IM7) and Windows with IM7 (step 2); SkillPact L2 on every PR.
+v0.9.0. 21 tools (probe, convert, resize, thumb, strip, trim, check, look, compare, optimize, crop, pad, rotate, adjust, overlay, montage, icons, alpha, brandkit, preset, batch); npm installer + MCP. 173 tests; CI on Ubuntu (no IM / IM6), macOS (sips / IM7) and Windows with IM7 (step 2); SkillPact L2 on every PR.
 
 ## What this repository owns
 
