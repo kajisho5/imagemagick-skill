@@ -409,8 +409,9 @@ version bump.
 |---|---|
 | `feature`, `minor` or `enhancement` | minor |
 | `fix`, `patch` or `bug` | patch |
+| `dependencies` (Dependabot) | patch |
 | no label | patch |
-| only `chore`, `ci`, `docs`, `test`, `refactor` or `dependencies` | none |
+| only `chore`, `ci`, `docs`, `test` or `refactor` | none |
 | `major` or `breaking` | refused (a major release is a deliberate hand-made bump) |
 
 The workflow then:

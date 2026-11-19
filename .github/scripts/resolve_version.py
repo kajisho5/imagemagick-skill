@@ -9,7 +9,8 @@ never answer "nothing to release" because its `default: patch` bumps regardless.
 
 Rules (same label vocabulary as .github/release-drafter.yml's autolabeler):
 
-  dependencies (Dependabot)          -> not releasable, whatever else it carries
+  dependencies (Dependabot)          -> patch, whatever else it carries (Velisa D37 addendum;
+                                        a bot's major/minor label is about the dependency)
   major / breaking                   -> refuse (exit 1): a major is a hand edit of package.json
   minor / feature / enhancement      -> minor
   patch / fix / bug                  -> patch
@@ -44,7 +45,7 @@ def bump_for_labels(labels):
     """'major' / 'minor' / 'patch' / None (not releasable) for one PR's labels."""
     names = {label.lower() for label in labels}
     if "dependencies" in names:
-        return None
+        return "patch"
     if names & MAJOR:
         return "major"
     if names & MINOR:

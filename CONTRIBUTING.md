@@ -93,8 +93,8 @@ Releases are automatic: a PR does not need to touch `package.json`, `docs/contra
 
 1. resolves the next version with `.github/scripts/resolve_version.py` from the labels of
    every PR merged since the last `vX.Y.Z` tag - `feature`/`minor`/`enhancement` → minor,
-   `fix`/`patch`/`bug` → patch, unlabeled → patch, only `chore`/`ci`/`docs`/`test`/
-   `refactor`/`dependencies` → **no release**, `major`/`breaking` → **refused**;
+   `fix`/`patch`/`bug`/`dependencies` → patch, unlabeled → patch, only `chore`/`ci`/`docs`/
+   `test`/`refactor` → **no release**, `major`/`breaking` → **refused**;
 2. bumps `package.json`, `.claude-plugin/plugin.json`, `docs/contract.md` and the
    "released version today" sentence in `docs/roadmap.md`, moves `CHANGELOG.md`'s
    "Unreleased" notes into a new section with the merged PR titles, and pushes that

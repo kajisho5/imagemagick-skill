@@ -286,6 +286,12 @@ say which sentence here no longer holds.
   major release is a hand-made `package.json` bump in a PR. Tests:
   `test_major_is_refused`, `test_major_crossing_is_refused_and_writes_nothing`.
 
-- **A merge of only chore/ci/docs/test/refactor/dependency PRs releases nothing.**
+- **A merge of only chore/ci/docs/test/refactor PRs releases nothing.**
   A version number should mean the shipped package changed. Test:
   `test_nothing_releasable`.
+
+- **A Dependabot (`dependencies`) PR releases a patch.** An updated dependency changes what
+  users install, and every Skill now releases it the same way (Velisa ADR-023, D37
+  addendum). Dependabot's own `major` label on such a PR is about the dependency, so the PR
+  is still a patch. Tests: `test_dependency_pull_request_releases_a_patch`,
+  `test_release_drafter_version_resolver_matches_these_rules`.
