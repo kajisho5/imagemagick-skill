@@ -156,5 +156,22 @@ class AutoBumpInFixtureRepoTests(unittest.TestCase):
         self.assertEqual(self.read("package.json"), before)
 
 
+class ReleaseWorkflowOrderTests(unittest.TestCase):
+    """The release commit is pushed with GITHUB_TOKEN, so no workflow runs on it on main: release.yml tests it
+    between the commit and every push (Velisa ADR-023)."""
+
+    def test_release_commit_is_tested_before_any_push(self):
+        with open(os.path.join(ROOT, ".github", "workflows", "release.yml"), encoding="utf-8") as fh:
+            text = fh.read()
+        test_step = text.index("- name: Test the release commit before pushing it")
+        self.assertLess(text.index("git commit -m"), test_step)
+        self.assertLess(text.index("git pull --rebase"), test_step)
+        pushes = [i for i in range(len(text)) if text.startswith("git push", i)]
+        self.assertTrue(pushes)
+        for push in pushes:
+            self.assertLess(test_step, push)
+        self.assertIn("python3 -m unittest discover -s tests", text[test_step:pushes[0]])
+
+
 if __name__ == "__main__":
     unittest.main()

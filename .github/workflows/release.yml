@@ -95,9 +95,28 @@ jobs:
           git add package.json .claude-plugin/plugin.json skill.contract.json docs/contract.md docs/roadmap.md CHANGELOG.md contract/contract.json
           git commit -m "chore(release): bump version to ${NEW_VERSION} [skip ci]"
           # A merge that landed meanwhile makes the push non-fast-forward; replay on top of
-          # it (a real conflict here should fail the run).
+          # it (a real conflict here should fail the run). Done before the test below, so the
+          # commit tested is the commit pushed.
           git pull --rebase origin main
-          git push origin HEAD:main
+
+      # The release commit is pushed with GITHUB_TOKEN (and says [skip ci]), so no workflow runs on it on main:
+      # test it here, before it is pushed. A failure stops the release; main and the tags stay as they were
+      # (Velisa ADR-023). The same suite as test.yml's job without ImageMagick.
+      - name: Test the release commit before pushing it
+        if: |
+          steps.setup.outputs.needs_auto_bump == 'true' &&
+          steps.resolve.outputs.resolved_version != '' &&
+          steps.resolve.outputs.resolved_version != steps.setup.outputs.last_version
+        run: |
+          python3 -m unittest discover -s tests
+          python3 contract/generate.py --check
+
+      - name: Push the release commit
+        if: |
+          steps.setup.outputs.needs_auto_bump == 'true' &&
+          steps.resolve.outputs.resolved_version != '' &&
+          steps.resolve.outputs.resolved_version != steps.setup.outputs.last_version
+        run: git push origin HEAD:main
 
       - name: Check whether this version is already released
         id: check
