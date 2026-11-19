@@ -28,6 +28,9 @@ categories:
     labels:
       - 'fix'
       - 'bug'
+  - title: '⬆️ Dependencies'
+    labels:
+      - 'dependencies'
   - title: '🧰 Maintenance'
     labels:
       - 'patch'
@@ -57,11 +60,10 @@ version-resolver:
       - 'patch'
       - 'fix'
       - 'bug'
-      - 'chore'
-      - 'refactor'
-      - 'ci'
-      - 'docs'
-      - 'test'
+      - 'dependencies'
+  # The same levels as .github/scripts/resolve_version.py, which decides the version (release-drafter only
+  # labels here): chore / refactor / ci / docs / test alone release nothing, `dependencies` is a patch
+  # (Velisa ADR-023, D37 and its addendum).
   default: patch
 
 # Matches this repo's actual PR title convention (Conventional Commits, e.g.

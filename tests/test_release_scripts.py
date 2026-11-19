@@ -15,7 +15,7 @@ sys.path.insert(0, RELEASE_SCRIPTS)
 
 from bump_contract_md import bump_contract_md  # noqa: E402
 from bump_roadmap_md import bump_roadmap_md  # noqa: E402
-from resolve_version import MajorRefused, bump_for_labels, resolve  # noqa: E402
+from resolve_version import MAJOR, MINOR, PATCH, MajorRefused, bump_for_labels, resolve  # noqa: E402
 
 GIT = shutil.which("git")
 
@@ -30,7 +30,9 @@ class ResolveVersionTests(unittest.TestCase):
         self.assertEqual(bump_for_labels(["chore", "fix"]), "patch")
         self.assertEqual(bump_for_labels([]), "patch")
         self.assertIsNone(bump_for_labels(["chore", "ci", "docs"]))
-        self.assertIsNone(bump_for_labels(["dependencies", "major"]))
+        self.assertEqual(bump_for_labels(["dependencies"]), "patch")
+        self.assertEqual(bump_for_labels(["dependencies", "major"]), "patch")
+        self.assertEqual(bump_for_labels(["dependencies", "github_actions"]), "patch")
         self.assertEqual(bump_for_labels(["breaking"]), "major")
 
     def test_minor_wins_over_patch(self):
@@ -44,11 +46,30 @@ class ResolveVersionTests(unittest.TestCase):
     def test_nothing_releasable(self):
         v, decisions = resolve(
             "0.3.0",
-            ["chore: tidy (#7)", "build(deps): bump x (#8)", "chore(release): bump version to 0.3.0 [skip ci]"],
-            self.labels({7: ["chore", "ci"], 8: ["dependencies", "major"]}),
+            ["chore: tidy (#7)", "refactor: x (#8)", "chore(release): bump version to 0.3.0 [skip ci]"],
+            self.labels({7: ["chore", "ci"], 8: ["refactor", "test"]}),
         )
         self.assertIsNone(v)
         self.assertEqual([d["bump"] for d in decisions], [None, None, None])
+
+    def test_dependency_pull_request_releases_a_patch(self):
+        v, decisions = resolve(
+            "0.3.0", ["chore: tidy (#7)", "build(deps): bump x (#8)"],
+            self.labels({7: ["chore", "ci"], 8: ["dependencies", "major"]}),
+        )
+        self.assertEqual(v, "0.3.1")
+        self.assertEqual([d["bump"] for d in decisions], [None, "patch"])
+
+    def test_release_drafter_version_resolver_matches_these_rules(self):
+        # The autolabeler's config names the same release levels as this script (Velisa D37 addendum).
+        import re
+        with open(os.path.join(ROOT, ".github", "release-drafter.yml"), encoding="utf-8") as fh:
+            text = fh.read()
+        block = text[text.index("version-resolver:"):text.index("autolabeler:")]
+        levels = {}
+        for level, body in re.findall(r"(?ms)^  (major|minor|patch):\n(.*?)(?=^  \S)", block):
+            levels[level] = set(re.findall(r"'([^']+)'", body))
+        self.assertEqual(levels, {"major": MAJOR, "minor": MINOR, "patch": PATCH | {"dependencies"}})
 
     def test_direct_commit_without_pr_is_patch_unless_housekeeping(self):
         self.assertEqual(resolve("0.3.0", ["hotfix typo"], self.labels({}))[0], "0.3.1")
