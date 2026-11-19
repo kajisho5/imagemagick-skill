@@ -8,6 +8,12 @@ under "Unreleased" in a PR move into that release's section.
 
 (nothing yet)
 
+## 0.10.1
+
+_Automated release: version and notes generated from pull requests merged since 0.10.0._
+
+- ci: commit the contract as contract/contract.json (#41)
+
 ## 0.10.0
 
 _Automated release: version and notes generated from pull requests merged since 0.9.0._
