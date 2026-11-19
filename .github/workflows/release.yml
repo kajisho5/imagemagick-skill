@@ -101,7 +101,7 @@ jobs:
 
       # The release commit is pushed with GITHUB_TOKEN (and says [skip ci]), so no workflow runs on it on main:
       # test it here, before it is pushed. A failure stops the release; main and the tags stay as they were
-      # (Velisa ADR-023). The same suite as test.yml's job without ImageMagick.
+      # (Velisa ADR-023). The same suite as test.yml's job without ImageMagick (ubuntu-latest has none).
       - name: Test the release commit before pushing it
         if: |
           steps.setup.outputs.needs_auto_bump == 'true' &&
