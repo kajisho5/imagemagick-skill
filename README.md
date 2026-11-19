@@ -390,10 +390,16 @@ A multi-frame input is read as its first frame.
 ```bash
 python3 -m unittest discover -s tests -v   # tests needing magick/sips skip themselves when absent
 python3 .github/scripts/contract_md.py --check   # docs/contract.md matches contract --json
+python3 contract/generate.py --check        # contract/contract.json matches contract --json (regenerate: drop --check)
 python3 demos/build.py                      # rebuild docs/demos/*.gif, docs/demos.md and assets/logo.png (dev only)
 python3 evals/run.py --list                 # the agent eval prompts (see evals/README.md)
 node bin/install.js --dir /tmp/skills       # try the installer without touching ~/.claude
 ```
+
+`contract/contract.json` is the contract committed as a file (the `contract --json` output as one line with sorted
+keys, compact separators and a final newline), so any release's contract is `git show vX.Y.Z:contract/contract.json`,
+with nothing installed or run. A unit test fails when it is stale, and the release workflow regenerates it after the
+version bump.
 
 `demos/build.py` needs ImageMagick. For the HEIC source it also needs `heif-enc` or a HEIC-writing ImageMagick. The skill itself never needs either of those or ffmpeg.
 
