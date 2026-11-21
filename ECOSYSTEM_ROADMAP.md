@@ -35,7 +35,7 @@ The agent prepares overlay images with `strip` / `resize` / `pad` (step 4, video
 - [x] **6. Alpha hygiene for stills** — [#39](https://github.com/kajisho5/imagemagick-skill/pull/39) (`alpha.py`: report, premultiply/unpremultiply, defringe `--matte`, key, fill) — straight ↔ premultiplied conversion, fringe cleanup at the edges of a cut-out logo, and a key (matte) image from the alpha, for deliveries that take a still as key and fill
   - なぜ要るか：ロゴ PNG の白い縁や、キー／フィル2枚で渡す静止画を確実に作れる
   - Done when: a fixture with a white fringe loses it; the key image's pixels equal the alpha
-- [x] **7. 1.0.0: the compatibility promise (Velisa ADR-031 / D46)** — PRLINK — `probe`, `convert`, `resize`, `thumb`, `strip`, `trim`, `check`, `crop`, `pad` and `optimize` are `STABLE`; every other tool stays `EXPERIMENTAL`. ADR-001 in `docs/decisions.md`, README "Compatibility promise (1.0)"
+- [x] **7. 1.0.0: the compatibility promise (Velisa ADR-031 / D46)** — [#50](https://github.com/kajisho5/imagemagick-skill/pull/50) — `probe`, `convert`, `resize`, `thumb`, `strip`, `trim`, `check`, `crop`, `pad` and `optimize` are `STABLE`; every other tool stays `EXPERIMENTAL`. ADR-001 in `docs/decisions.md`, README "Compatibility promise (1.0)"
   - Done when: `provides[].lifecycle` states the promise, the 1.0.0 contract diff is `none` (lifecycle promotion only), and the agent's re-pin widens its gate to `1.0.`
 
 ---
