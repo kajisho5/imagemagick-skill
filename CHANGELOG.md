@@ -6,12 +6,24 @@ under "Unreleased" in a PR move into that release's section.
 
 ## Unreleased
 
+(nothing yet)
+
+## 0.10.2
+
+_Automated release: version and notes generated from pull requests merged since 0.10.1._
+
 - `contract --json` now prints exactly the bytes of `contract/contract.json` (sorted keys,
   compact separators, one line); `contract/generate.py --check` compares the raw CLI output
   instead of re-serialising it. The JSON content is unchanged.
 - `brandkit`: an output directory that cannot be created is reported through the usual
   structured error (`ok:false` with `--json`) instead of a traceback, and on `--timeout` the
   variant being written is removed, as for every other tool's output.
+
+- fix: contract --json is byte-identical to contract/contract.json; brandkit errors and timeouts clean up (#44) (#49)
+- ci: Velisa's reusable changelog-check/release-guard; dependencies PRs release a patch (D36, D37) (#46)
+- ci(release): test the release commit before pushing it (#45)
+- ci: run contract-diff on every pull request (#43)
+- ci: call Velisa's contract-diff on contract changes, one run per pull request (#42)
 
 ## 0.10.1
 
