@@ -106,6 +106,10 @@ Releases are automatic: a PR does not need to touch `package.json`, `docs/contra
 A PR may bump `package.json` by hand and write its own CHANGELOG section instead; that
 version is then used as-is. A **major** version is only ever such a hand-made bump.
 
+From 1.0.0, a PR that contract-diff labels `contract:breaking` fails the `major-bump-check`
+workflow unless it bumps `package.json`'s major version, and `release.yml` refuses to release
+one that was merged without it (docs/decisions.md ADR-002). A `major` label does not count.
+
 ## Reporting issues
 
 Include the exact command, actual vs. expected output, and

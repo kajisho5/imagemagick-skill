@@ -286,6 +286,10 @@ say which sentence here no longer holds.
   major release is a hand-made `package.json` bump in a PR. Tests:
   `test_major_is_refused`, `test_major_crossing_is_refused_and_writes_nothing`.
 
+- **From 1.0.0, a `contract:breaking` PR needs a hand major bump, and a `major` label does
+  not stand in for it.** This flow has no label path to a major release, so the check reads
+  `package.json` (decisions.md ADR-002). Tests: `tests/test_major_bump_check.py`.
+
 - **A merge of only chore/ci/docs/test/refactor PRs releases nothing.**
   A version number should mean the shipped package changed. Test:
   `test_nothing_releasable`.

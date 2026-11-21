@@ -1,0 +1,44 @@
+name: Major bump check
+
+# docs/decisions.md ADR-002 (Velisa ADR-031 section 5, decision D46): from 1.0.0, a change that `si contract-diff`
+# calls breaking ships only in a major release. This repository's release flow has no `major` label
+# (resolve_version.py refuses it): a major release is a hand bump of package.json in the pull request (ADR-001). So,
+# once the latest release tag is 1.0.0 or later, a pull request labelled `contract:breaking` fails here until it bumps
+# package.json's major version above the tag's. Before 1.0.0 it always passes. release.yml applies the same rule to
+# every pull request merged since the tag (.github/scripts/major_bump_check.py --release).
+#
+# contract-diff labels the pull request with GITHUB_TOKEN, and a label set that way starts no workflow. So on
+# opened / synchronize / reopened this waits for that commit's contract-diff run, then reads the labels as they are;
+# it fails if that run did not succeed or left no contract:* label (a fork). A label a person adds or removes
+# (labeled / unlabeled) runs it again.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  actions: read # contract-diff's runs on this commit
+  contents: read
+  issues: read # the pull request's labels
+  pull-requests: read
+
+# A newer event on the same pull request cancels the older run, so the newest labels decide.
+concurrency:
+  group: major-bump-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  major-bump-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the release tags and origin/main
+
+      - name: A contract:breaking pull request on 1.x bumps the major version by hand
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python3 .github/scripts/major_bump_check.py --check-pr "$PR_NUMBER" --head-sha "$HEAD_SHA"

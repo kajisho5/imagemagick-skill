@@ -6,7 +6,9 @@ under "Unreleased" in a PR move into that release's section.
 
 ## Unreleased
 
-(nothing yet)
+- CI: from 1.0.0, a pull request labelled `contract:breaking` fails `major-bump-check` unless it
+  bumps `package.json`'s major version by hand, and `release.yml` stops a release that contains
+  one without that bump (docs/decisions.md ADR-002; Velisa ADR-031). Before 1.0 nothing changes.
 
 ## 1.0.0
 
