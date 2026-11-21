@@ -8,6 +8,25 @@ under "Unreleased" in a PR move into that release's section.
 
 (nothing yet)
 
+## 1.0.0
+
+_Major release, version bumped by hand (docs/decisions.md ADR-001; Velisa ADR-031). No tool, flag or output key changed._
+
+- **Compatibility promise.** `provides[].lifecycle` is now `STABLE` for `probe`, `convert`,
+  `resize`, `thumb`, `strip`, `trim`, `check`, `crop`, `pad` and `optimize`. A change that
+  `si contract-diff` calls breaking to one of them ships only in a major release. The promise
+  also covers the failure, dry-run and timeout shapes, the rules, the top-level contract fields
+  and those tools' `doctor --json` rows.
+- `look`, `compare`, `rotate`, `adjust`, `overlay`, `montage`, `icons`, `alpha`, `brandkit`,
+  `preset` and `batch` stay `EXPERIMENTAL`: they may still change in a minor release, named here.
+- Deprecation rule for STABLE tools: deprecated in a minor release, kept working for at least
+  one more minor release and 30 days, removed only in the next major release. See the README,
+  "Compatibility promise (1.0)".
+- `tests/test_stable_snapshot.py` (RM-074) fails when a STABLE tool loses an argument or a
+  required output key, or gains a required argument.
+- Contract: a lifecycle promotion only (`si contract-diff`: `none`, rule `lifecycle-promoted`).
+  `contract_version` stays 1.0.
+
 ## 0.10.2
 
 _Automated release: version and notes generated from pull requests merged since 0.10.1._

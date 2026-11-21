@@ -1,6 +1,6 @@
 # Roadmap
 
-The released version today is **0.10.2** (notes in CHANGELOG.md); **0.6.1** — GPS detection reads the raw EXIF block (HEIC
+The released version today is **1.0.0** (notes in CHANGELOG.md); **0.6.1** — GPS detection reads the raw EXIF block (HEIC
 included, which ImageMagick 6 never parses), and `strip` refuses an output that may
 still carry GPS.
 
@@ -94,7 +94,7 @@ Item IDs never change and are never reused. A dropped item stays in the table as
 | RM-071 | planned | | `doctor` reports ImageMagick `policy.xml` limits (memory, disk, blocked coders) |
 | RM-072 | planned | | MCP `prompts`: canned recipes (OG image, favicon set, privacy strip) naming real tool calls |
 | RM-073 | planned | | Contract fields `mutates_input: false` and an idempotency hint per tool |
-| RM-074 | planned | | Stability guarantee in `docs/contract.md` with an argument-name snapshot test |
+| RM-074 | done | 1.0.0 | Stability guarantee in `docs/contract.md` with an argument-name snapshot test (ten `STABLE` tools, docs/decisions.md ADR-001) |
 | RM-075 | planned | | Eval runs recorded per iteration in `evals/results/`, graded against `evals/agent_prompts.json` |
 | RM-076 | planned | | `references/scripts.md` per-flag reference generated from the contract |
 | RM-077 | planned | | SKILL.md two-tier split into `references/` before it nears the 30 KB budget |

@@ -645,9 +645,17 @@ def mcp_argv(spec, arguments):
     return argv + (["--"] + after if after else [])
 
 
+# The 1.0 compatibility promise (docs/decisions.md ADR-001, Velisa ADR-031): these tools are STABLE, so a change that
+# `si contract-diff` calls breaking to one of them ships only in a major release, and retiring one follows the deprecation
+# rule. Every other tool is EXPERIMENTAL and may still change in a minor release (named in the CHANGELOG).
+STABLE_TOOLS = ("probe", "convert", "resize", "thumb", "strip", "trim", "check", "crop", "pad", "optimize")
+
+
 def provides(names):
-    """The AI Video Production OS registry's capability ids: image.<tool> -> imagemagick-skill/<tool>."""
-    return [{"id": f"image.{n}", "lifecycle": "EXPERIMENTAL", "tool_id": f"{SKILL_ID}/{n}"} for n in names]
+    """The AI Video Production OS registry's capability ids: image.<tool> -> imagemagick-skill/<tool>, with the
+    tool's lifecycle (STABLE for STABLE_TOOLS, EXPERIMENTAL otherwise)."""
+    return [{"id": f"image.{n}", "lifecycle": "STABLE" if n in STABLE_TOOLS else "EXPERIMENTAL", "tool_id": f"{SKILL_ID}/{n}"}
+            for n in names]
 
 
 def build_contract_payload():

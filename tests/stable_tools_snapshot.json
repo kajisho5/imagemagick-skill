@@ -1,0 +1,261 @@
+{
+ "check": {
+  "inputs": [
+   "expect_format",
+   "expect_height",
+   "expect_max_height",
+   "expect_max_width",
+   "expect_width",
+   "input",
+   "json",
+   "output",
+   "timeout"
+  ],
+  "output_keys": [
+   "format",
+   "height",
+   "ok",
+   "output",
+   "width"
+  ],
+  "required_inputs": [
+   "output"
+  ]
+ },
+ "convert": {
+  "inputs": [
+   "dry_run",
+   "input",
+   "json",
+   "output",
+   "overwrite",
+   "quality",
+   "timeout"
+  ],
+  "output_keys": [
+   "backend",
+   "input",
+   "ok",
+   "output"
+  ],
+  "required_inputs": [
+   "input",
+   "output"
+  ]
+ },
+ "crop": {
+  "inputs": [
+   "aspect",
+   "dry_run",
+   "gravity",
+   "height",
+   "input",
+   "json",
+   "output",
+   "overwrite",
+   "timeout",
+   "width",
+   "x",
+   "y"
+  ],
+  "output_keys": [
+   "actual",
+   "backend",
+   "box",
+   "input",
+   "mode",
+   "ok",
+   "original",
+   "output"
+  ],
+  "required_inputs": [
+   "input",
+   "output"
+  ]
+ },
+ "optimize": {
+  "inputs": [
+   "dry_run",
+   "input",
+   "json",
+   "max_kb",
+   "max_quality",
+   "min_quality",
+   "output",
+   "overwrite",
+   "strip",
+   "timeout"
+  ],
+  "output_keys": [
+   "actual",
+   "attempts",
+   "backend",
+   "bytes",
+   "format",
+   "input",
+   "kb",
+   "max_kb",
+   "method",
+   "ok",
+   "original_bytes",
+   "output",
+   "quality",
+   "stripped"
+  ],
+  "required_inputs": [
+   "input",
+   "max_kb",
+   "output"
+  ]
+ },
+ "pad": {
+  "inputs": [
+   "aspect",
+   "color",
+   "dry_run",
+   "gravity",
+   "height",
+   "input",
+   "json",
+   "output",
+   "overwrite",
+   "timeout",
+   "width"
+  ],
+  "output_keys": [
+   "actual",
+   "backend",
+   "color",
+   "input",
+   "mode",
+   "offset",
+   "ok",
+   "original",
+   "output"
+  ],
+  "required_inputs": [
+   "color",
+   "input",
+   "output"
+  ]
+ },
+ "probe": {
+  "inputs": [
+   "dry_run",
+   "input",
+   "json",
+   "timeout"
+  ],
+  "output_keys": [
+   "backend",
+   "format",
+   "height",
+   "input",
+   "ok",
+   "width"
+  ],
+  "required_inputs": [
+   "input"
+  ]
+ },
+ "resize": {
+  "inputs": [
+   "dry_run",
+   "height",
+   "input",
+   "json",
+   "mode",
+   "output",
+   "overwrite",
+   "quality",
+   "timeout",
+   "width"
+  ],
+  "output_keys": [
+   "actual",
+   "backend",
+   "input",
+   "mode",
+   "ok",
+   "output",
+   "requested"
+  ],
+  "required_inputs": [
+   "height",
+   "input",
+   "output",
+   "width"
+  ]
+ },
+ "strip": {
+  "inputs": [
+   "dry_run",
+   "input",
+   "json",
+   "output",
+   "overwrite",
+   "timeout"
+  ],
+  "output_keys": [
+   "backend",
+   "has_gps",
+   "input",
+   "ok",
+   "output"
+  ],
+  "required_inputs": [
+   "input",
+   "output"
+  ]
+ },
+ "thumb": {
+  "inputs": [
+   "dry_run",
+   "input",
+   "json",
+   "long_edge",
+   "output",
+   "overwrite",
+   "quality",
+   "timeout"
+  ],
+  "output_keys": [
+   "actual",
+   "backend",
+   "input",
+   "long_edge",
+   "ok",
+   "output"
+  ],
+  "required_inputs": [
+   "input",
+   "long_edge",
+   "output"
+  ]
+ },
+ "trim": {
+  "inputs": [
+   "dry_run",
+   "fuzz",
+   "input",
+   "json",
+   "max_trim_percent",
+   "output",
+   "overwrite",
+   "timeout"
+  ],
+  "output_keys": [
+   "backend",
+   "input",
+   "ok",
+   "original",
+   "output",
+   "removed_percent",
+   "trimmed"
+  ],
+  "required_inputs": [
+   "input",
+   "output"
+  ]
+ }
+}
