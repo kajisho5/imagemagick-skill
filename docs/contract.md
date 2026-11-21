@@ -12,13 +12,18 @@ the scripts.
 | Field | Meaning |
 | --- | --- |
 | `contract_version` | shape of this document (`1.0`) |
-| `skill.version` | the npm / package.json version (`0.10.2`) |
+| `skill.version` | the npm / package.json version (`1.0.0`) |
 
 `version` and `name` at the top level of the JSON repeat `skill.version` and `skill.id`;
 they predate `skill` and stay for compatibility.
 
 `provides` lists one capability per tool in the shape the AI Video Production OS registry
-reads: `{"id": "image.<tool>", "lifecycle": "EXPERIMENTAL", "tool_id": "imagemagick-skill/<tool>"}`.
+reads: `{"id": "image.<tool>", "lifecycle": "STABLE", "tool_id": "imagemagick-skill/<tool>"}`.
+From 1.0.0, `lifecycle` is `STABLE` for `probe`, `convert`, `resize`, `thumb`, `strip`, `trim`,
+`check`, `crop`, `pad` and `optimize`: a breaking change to one of them ships only in a major
+release. Every other tool is `EXPERIMENTAL` and may still change in a minor release. The
+promise and the deprecation rule are in the README ("Compatibility promise (1.0)") and in
+`docs/decisions.md` ADR-001.
 
 ## Where the schemas come from
 
@@ -113,9 +118,9 @@ automation refuses to choose a major version by itself.
   "ok": true,
   "name": "imagemagick-skill",
   "contract_version": "1.0",
-  "skill": {"id": "imagemagick-skill", "version": "0.10.2", "execution_mode": "local"},
+  "skill": {"id": "imagemagick-skill", "version": "1.0.0", "execution_mode": "local"},
   "execution": {"shell": false, "network": false, "input_mutation": false, "arbitrary_executables": false},
-  "provides": [{"id": "image.probe", "lifecycle": "EXPERIMENTAL", "tool_id": "imagemagick-skill/probe"}],
+  "provides": [{"id": "image.probe", "lifecycle": "STABLE", "tool_id": "imagemagick-skill/probe"}],
   "tools": [{"name": "probe", "role": "analysis", "backends": ["magick", "sips"], "input_schema": {"...": "..."}}]
 }
 ```

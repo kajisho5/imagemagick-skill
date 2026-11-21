@@ -72,6 +72,20 @@ class ContractShapeTests(unittest.TestCase):
             self.assertEqual(set(p), {"id", "lifecycle", "tool_id"})
             self.assertIn(p["lifecycle"], ("PROPOSED", "EXPERIMENTAL", "STABLE", "DEPRECATED", "RETIRED"))
 
+    def test_provides_lifecycle_is_the_1_0_promise(self):
+        """docs/decisions.md ADR-001: exactly these ten tools are STABLE; everything else stays EXPERIMENTAL. Changing
+        this set is a decision (an ADR and a CHANGELOG line), never a side effect: promoting a tool is metadata only,
+        demoting or removing a STABLE one waits for a major release after a DEPRECATED minor."""
+        lifecycle = {p["id"]: p["lifecycle"] for p in self.payload["provides"]}
+        stable = {"image.probe", "image.convert", "image.resize", "image.thumb", "image.strip", "image.trim",
+                  "image.check", "image.crop", "image.pad", "image.optimize"}
+        self.assertEqual({i for i, lc in lifecycle.items() if lc == "STABLE"}, stable)
+        self.assertEqual({i for i, lc in lifecycle.items() if lc != "STABLE"},
+                         {i for i, lc in lifecycle.items() if lc == "EXPERIMENTAL"})
+        # batch stays EXPERIMENTAL: it runs EXPERIMENTAL tools (look, montage, icons, compare) as well
+        self.assertEqual(lifecycle["image.batch"], "EXPERIMENTAL")
+        self.assertGreaterEqual(int(self.payload["skill"]["version"].split(".")[0]), 1)
+
     def test_contract_cli_prints_the_same_payload(self):
         out = subprocess.run(
             [sys.executable, os.path.join(SCRIPTS, "_contract.py"), "contract", "--json"],

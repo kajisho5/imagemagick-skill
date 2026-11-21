@@ -239,6 +239,26 @@ flowchart LR
 
 Not tools, but part of the surface: `scripts/_contract.py` (`contract --json`, `doctor`) and `mcp/server.py` (the MCP transport).
 
+## Compatibility promise (1.0)
+
+From 1.0.0, the contract's `provides[].lifecycle` says which tools this skill stands behind ([docs/decisions.md](docs/decisions.md) ADR-001).
+
+**STABLE**: `probe`, `convert`, `resize`, `thumb`, `strip`, `trim`, `check`, `crop`, `pad` and `optimize`. For these tools:
+
+- a change that `si contract-diff` calls breaking, such as a removed or renamed flag or output key or a changed type or enum, ships only in a major release (2.0.0 and on);
+- an additive change, such as a new optional flag or a new output key, ships in a minor release;
+- the promise also covers what every tool shares: the failure, dry-run and timeout shapes (`result_shapes`, exit codes 1 and 124), the `rules`, the top-level contract fields, and each STABLE tool's `usable` and `backend` row in `doctor --json`.
+
+**EXPERIMENTAL**: `look`, `compare`, `rotate`, `adjust`, `overlay`, `montage`, `icons`, `alpha`, `brandkit`, `preset` and `batch`. These may still change in a minor release, including in ways `si contract-diff` calls breaking. Every such change is named in the pull request and in the CHANGELOG.
+
+**Deprecation.** A STABLE tool, or a flag or output key of one, is retired in three steps:
+
+1. it is marked deprecated in a minor release: a tool by `lifecycle: DEPRECATED` in `provides`, a flag or output key in the tool's `description`. The CHANGELOG and this README name the replacement, or say there is none;
+2. it keeps working for at least one more minor release and at least 30 days;
+3. it is removed only in the next major release.
+
+Moving an EXPERIMENTAL tool to STABLE is metadata, not a shape change, and can happen in any release. `contract_version` (1.0) is a separate axis from the package version.
+
 ## Built for agents
 
 ### Machine-readable contract
@@ -431,6 +451,7 @@ The details are in [CONTRIBUTING.md](CONTRIBUTING.md).
 | [docs/contract.md](docs/contract.md) | the contract field by field, MCP mapping, every tool's arguments and output keys |
 | [docs/demos.md](docs/demos.md) | every demo GIF with the exact commands and their JSON results |
 | [docs/design-decisions.md](docs/design-decisions.md) | behaviour that looks like a bug but is a decision, each with the test that pins it |
+| [docs/decisions.md](docs/decisions.md) | architecture decisions (ADR-001: the 1.0 compatibility promise) |
 | [docs/roadmap.md](docs/roadmap.md) | what is done, planned and only an idea |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | scope, setup, tests, labels and releases |
 | [AGENTS.md](AGENTS.md) | notes for coding agents working on this repository |
