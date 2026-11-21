@@ -5,11 +5,13 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 
 import _contract  # noqa: E402
-from _common import which_magick  # noqa: E402
+import brandkit  # noqa: E402
+from _common import ImageSkillError, ImageSkillTimeout, which_magick  # noqa: E402
 from fixtures import write_rgba_png, write_solid_png  # noqa: E402
 
 SCRIPT = os.path.join(os.path.dirname(__file__), "..", "scripts", "brandkit.py")
@@ -127,6 +129,78 @@ class BrandkitTests(unittest.TestCase):
         code, out = self.brandkit(*args)
         self.assertLessEqual(set(out), set(spec["properties"]) | {"ok"})
         self.assertLessEqual(set(spec["required"]), set(out))
+
+
+class BrandkitFailurePathTests(unittest.TestCase):
+    """No ImageMagick needed: the backend is replaced, so these run everywhere."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.logo = os.path.join(self.tmp.name, "logo.png")
+        write_solid_png(self.logo, 8, 8)
+        for target, value in (("select_backend", ("magick", "magick")),
+                              ("magick_info", "80 60 Blend")):
+            patcher = mock.patch.object(brandkit, target, return_value=value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def args(self, out_dir):
+        return brandkit.build_parser().parse_args(
+            [self.logo, "-o", out_dir, "--sizes", "40", "--clear-space", "2", "--palette", "2"])
+
+    def test_an_output_directory_that_cannot_be_created_is_a_structured_error(self):
+        blocker = os.path.join(self.tmp.name, "kit")
+        open(blocker, "w").close()  # a file where the folder should go: makedirs raises OSError
+        with self.assertRaises(ImageSkillError) as ctx:
+            brandkit.run_brandkit(self.args(blocker))
+        self.assertIn("cannot create the output directory", str(ctx.exception))
+
+    def test_an_output_directory_error_goes_through_the_json_failure_path(self):
+        blocker = os.path.join(self.tmp.name, "kit")
+        open(blocker, "w").close()
+        proc = subprocess.run([sys.executable, "-c",
+                               "import sys; sys.path.insert(0, sys.argv[1]); import brandkit; from unittest import mock;"
+                               "mock.patch.object(brandkit, 'select_backend', return_value=('magick', 'magick')).start();"
+                               "mock.patch.object(brandkit, 'magick_info', return_value='80 60 Blend').start();"
+                               "brandkit.main(sys.argv[2:])",
+                               os.path.dirname(SCRIPT), self.logo, "-o", blocker, "--sizes", "40",
+                               "--clear-space", "2", "--palette", "2", "--json"],
+                              capture_output=True, text=True, timeout=60)
+        out = json.loads(proc.stdout)
+        self.assertEqual(proc.returncode, 1, proc.stderr)
+        self.assertIs(out["ok"], False)
+        self.assertIn("cannot create the output directory", out["reason"])
+
+    def test_a_timeout_removes_the_variant_being_written(self):
+        out_dir = os.path.join(self.tmp.name, "kit")
+        written = []
+
+        def fake_run(cmd):
+            path = cmd[-1].split(":", 1)[1]
+            with open(path, "w") as f:
+                f.write("partial")
+            written.append(path)
+            raise ImageSkillTimeout(1, "magick")
+
+        with mock.patch.object(brandkit, "run", side_effect=fake_run):
+            with self.assertRaises(ImageSkillTimeout):
+                brandkit.run_brandkit(self.args(out_dir))
+        self.assertEqual(len(written), 1)
+        self.assertFalse(os.path.exists(written[0]), "the incomplete variant was left behind")
+
+    def test_a_timeout_never_removes_a_file_this_run_did_not_create(self):
+        out_dir = os.path.join(self.tmp.name, "kit")
+        os.makedirs(out_dir)
+        existing = os.path.join(out_dir, "logo-color.png")
+        with open(existing, "w") as f:
+            f.write("earlier run")
+        args = self.args(out_dir)
+        args.overwrite = True
+        with mock.patch.object(brandkit, "run", side_effect=ImageSkillTimeout(1, "magick")):
+            with self.assertRaises(ImageSkillTimeout):
+                brandkit.run_brandkit(args)
+        self.assertTrue(os.path.exists(existing))
 
 
 if __name__ == "__main__":

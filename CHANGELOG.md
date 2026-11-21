@@ -6,7 +6,12 @@ under "Unreleased" in a PR move into that release's section.
 
 ## Unreleased
 
-(nothing yet)
+- `contract --json` now prints exactly the bytes of `contract/contract.json` (sorted keys,
+  compact separators, one line); `contract/generate.py --check` compares the raw CLI output
+  instead of re-serialising it. The JSON content is unchanged.
+- `brandkit`: an output directory that cannot be created is reported through the usual
+  structured error (`ok:false` with `--json`) instead of a traceback, and on `--timeout` the
+  variant being written is removed, as for every other tool's output.
 
 ## 0.10.1
 

@@ -24,6 +24,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (  # noqa: E402
     ImageSkillError,
+    ImageSkillTimeout,
     JSONArgumentParser,
     add_timeout_arg,
     check_output_not_exists,
@@ -151,10 +152,24 @@ def run_brandkit(args):
     if args.dry_run:
         return {"dry_run": True, "would_run": [p["cmd"] for p in plan]}
 
-    os.makedirs(out_dir, exist_ok=True)
+    try:
+        os.makedirs(out_dir, exist_ok=True)
+    except OSError as e:
+        raise ImageSkillError(f"cannot create the output directory {out_dir}: {e.strerror or e}") from e
     files = []
     for item in plan:
-        run(item["cmd"])
+        # run_tool() only removes args.output on a timeout; brandkit writes many files, so the one
+        # being written when the budget runs out (incomplete) is removed here.
+        fresh = not os.path.exists(item["path"])
+        try:
+            run(item["cmd"])
+        except ImageSkillTimeout:
+            if fresh and os.path.isfile(item["path"]):
+                try:
+                    os.remove(item["path"])
+                except OSError:
+                    pass
+            raise
         verify_output_format(item["path"], backend)
         got = tuple(int(v) for v in magick_info(magick, item["path"], "%w %h", auto_orient=False).split())
         if got != (item["width"], item["height"]):
