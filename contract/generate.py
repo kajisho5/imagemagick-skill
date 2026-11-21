@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Write or check contract/contract.json, this Skill's machine-readable contract as a committed file.
 
-The file is the output of `python3 scripts/_contract.py contract --json`, as one line with
-sorted keys, compact separators, no ASCII escapes and a final newline, so the contract of any
+The file is the output of `python3 scripts/_contract.py contract --json`, byte for byte: one
+line with sorted keys, compact separators, no ASCII escapes and a final newline, so the contract of any
 commit or release tag can be read with `git show <tag>:contract/contract.json`, without
 installing or running this repository's code.
 
@@ -31,9 +31,13 @@ def render() -> bytes:
     out = subprocess.run(COMMAND, cwd=str(ROOT), env=env, check=True,  # noqa: S603 - fixed argv
                          stdout=subprocess.PIPE).stdout
     out = out.replace(b"\r\n", b"\n")  # print() on Windows writes CRLF; the file is LF everywhere
-    doc = json.loads(out.decode("utf-8"))
-    text = json.dumps(doc, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    return (text + "\n").encode("utf-8")
+    # The CLI already prints the file's serialisation (sorted keys, compact, one line), so its raw
+    # bytes are written and compared as they are, never re-serialised: what `contract --json`
+    # prints and what is committed cannot differ. Parsing only checks it is one JSON document.
+    json.loads(out.decode("utf-8"))
+    if not out.endswith(b"\n") or out.count(b"\n") != 1:
+        raise SystemExit("contract --json must print exactly one line")
+    return out
 
 
 def main(argv=None) -> int:

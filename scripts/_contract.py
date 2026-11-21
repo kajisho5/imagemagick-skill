@@ -892,9 +892,18 @@ def build_doctor_payload():
     return payload
 
 
+def contract_json(payload):
+    """The `contract --json` text: one line, sorted keys, compact separators, no ASCII escapes.
+
+    contract/contract.json is exactly this text plus a final newline, so the CLI output and
+    the committed file are byte-identical (contract/generate.py --check compares the raw bytes).
+    """
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
 def cmd_contract(args):
     payload = build_contract_payload()
-    print(json.dumps(payload, ensure_ascii=False, indent=None if args.json else 2))
+    print(contract_json(payload) if args.json else json.dumps(payload, ensure_ascii=False, indent=2))
 
 
 def cmd_doctor(args):
