@@ -39,7 +39,7 @@ concurrency:
 
 permissions:
   contents: write
-  pull-requests: read   # resolve_version.py reads merged PRs' labels through gh api
+  pull-requests: read   # resolve_version.py and major_bump_check.py read merged PRs' labels through gh api
   id-token: write       # npm publish --provenance
 
 jobs:
@@ -68,6 +68,14 @@ jobs:
           else
             echo "needs_auto_bump=false" >> "$GITHUB_OUTPUT"
           fi
+
+      # docs/decisions.md ADR-002: from 1.0.0, a merged contract:breaking pull request ships only in a major release,
+      # which here is a hand bump of package.json. Checked in both modes, before anything is bumped, tagged or
+      # published; a failure leaves main and the tags as they are.
+      - name: A contract:breaking change on 1.x ships only in a hand-bumped major release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 .github/scripts/major_bump_check.py --release
 
       - name: Resolve the next version from merged PR labels
         id: resolve
